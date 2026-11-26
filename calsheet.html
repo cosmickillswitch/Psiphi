@@ -1,0 +1,909 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Calsheet · Psi Phi Studio</title>
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+:root{--bg:#18191d;--bar:#22242a;--panel:#2a2c33;--panel2:#33363e;--ink:#ececf2;--muted:#9a9cab;--rule:#3a3d47;--accent:#3fbf7f;--sel:#2f7df6}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:14px/1.35 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;overflow:hidden;-webkit-tap-highlight-color:transparent}
+button,select,input{font:inherit;color:inherit}
+#app{position:fixed;inset:0;display:flex;flex-direction:column}
+#top{display:flex;align-items:center;gap:6px;padding:calc(6px + env(safe-area-inset-top)) 10px 6px;background:var(--bar);border-bottom:1px solid var(--rule)}
+.brand{font-weight:700;white-space:nowrap}.brand b{color:var(--accent)}
+#bookName{background:transparent;border:1px solid transparent;border-radius:8px;padding:5px 8px;width:200px}
+#bookName:focus{border-color:var(--rule);background:var(--panel)}
+.grow{flex:1}
+.tb{flex:none;display:inline-grid;place-items:center;min-width:34px;height:34px;padding:0 8px;border-radius:8px;border:1px solid transparent;background:transparent;cursor:pointer;white-space:nowrap}
+.tb:hover{background:var(--panel2)}
+.tb.on{background:var(--panel2);border-color:var(--accent);color:var(--accent)}
+.tb:disabled{opacity:.35}
+.tb svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#ribbon{display:flex;align-items:center;gap:3px;padding:6px 10px;background:var(--bar);border-bottom:1px solid var(--rule);overflow-x:auto;scrollbar-width:none}
+#ribbon::-webkit-scrollbar{display:none}
+#ribbon select{background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:5px 6px;height:34px}
+.sep{width:1px;height:24px;background:var(--rule);margin:0 4px;flex:none}
+.sw{position:relative}.sw i{position:absolute;left:7px;right:7px;bottom:5px;height:4px;border-radius:2px}
+#fbar{display:flex;align-items:center;gap:6px;padding:5px 10px;background:#1e2026;border-bottom:1px solid var(--rule)}
+#nameBox{width:84px;text-align:center;background:var(--panel);border:1px solid var(--rule);border-radius:7px;padding:5px;font:13px ui-monospace,Menlo,monospace}
+#fx{font:italic 600 14px Georgia,serif;color:var(--muted);padding:0 4px}
+#formula{flex:1;background:var(--panel);border:1px solid var(--rule);border-radius:7px;padding:6px 9px;font:14px ui-monospace,Menlo,monospace}
+#main{flex:1;display:flex;min-height:0}
+#gridWrap{flex:1;overflow:auto;position:relative;background:#fff;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y}
+#gridInner{position:relative;display:inline-block}
+#grid{border-collapse:separate;border-spacing:0;table-layout:fixed;color:#1c1c20;font:14px -apple-system,"Helvetica Neue",Arial,sans-serif;-webkit-user-select:none;user-select:none}
+#grid th{position:sticky;background:#eef0f4;color:#5a5e6b;font:500 12px -apple-system,sans-serif;border-right:1px solid #d4d7df;border-bottom:1px solid #d4d7df;z-index:2;cursor:pointer}
+#grid thead th{top:0;height:26px;text-align:center}
+#grid tbody th{left:0;width:46px;text-align:center;z-index:1}
+#grid thead th.corner{left:0;z-index:3}
+#grid th.hl{background:#d8e6fd;color:#1d4fb0}
+#grid td{height:28px;padding:0 6px;border-right:1px solid #e3e5ea;border-bottom:1px solid #e3e5ea;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:cell;background:#fff}
+#grid td.num{text-align:right}
+#grid td.err{color:#c62828}
+#grid td.bool{text-align:center}
+.rz{position:absolute;top:0;right:-4px;width:9px;height:100%;cursor:col-resize;z-index:4;touch-action:none}
+#selBox{position:absolute;border:2px solid var(--sel);background:rgba(47,125,246,.08);pointer-events:none;z-index:5}
+#selBox .knob{position:absolute;right:-9px;bottom:-9px;width:18px;height:18px;border-radius:50%;background:var(--sel);border:3px solid #fff;pointer-events:auto;touch-action:none;cursor:nwse-resize;box-shadow:0 1px 4px rgba(0,0,0,.4)}
+#selBox.lift{box-shadow:0 10px 26px rgba(0,0,0,.35);background:rgba(47,125,246,.16)}
+#selBox .edge{position:absolute;pointer-events:auto;cursor:move;touch-action:none}
+#selBox .edge.t{left:0;right:0;top:-5px;height:9px}#selBox .edge.b{left:0;right:12px;bottom:-5px;height:9px}#selBox .edge.l{top:0;bottom:0;left:-5px;width:9px}#selBox .edge.r{top:0;bottom:12px;right:-5px;width:9px}
+#ghost{position:absolute;border:2px dashed var(--sel);background:rgba(47,125,246,.12);pointer-events:none;z-index:7;display:none}
+#actBar{position:absolute;z-index:8;display:none;gap:2px;padding:4px;background:#1c1d22;border-radius:12px;box-shadow:0 10px 26px rgba(0,0,0,.45);white-space:nowrap}
+#actBar button{border:0;background:transparent;color:#fff;font:600 13px -apple-system,sans-serif;padding:8px 10px;border-radius:8px;cursor:pointer}
+#actBar button:hover,#actBar button:active{background:#33363e}
+#actBar i{width:1px;background:#44474f;margin:4px 2px;display:inline-block;align-self:stretch}
+#refBox{position:absolute;border:2px dashed #e0782f;pointer-events:none;z-index:5;display:none}
+#cellEd{position:absolute;z-index:6;border:2px solid var(--sel);padding:0 5px;font:14px -apple-system,"Helvetica Neue",Arial,sans-serif;color:#111;background:#fff;outline:none;display:none;box-shadow:0 2px 10px rgba(0,0,0,.25)}
+#tabs{display:flex;align-items:center;gap:4px;padding:5px 8px calc(5px + env(safe-area-inset-bottom));background:var(--bar);border-top:1px solid var(--rule);overflow-x:auto}
+.tab{border:1px solid var(--rule);background:var(--panel);border-radius:8px;padding:5px 12px;cursor:pointer;white-space:nowrap}
+.tab.on{background:#fff;color:#111;border-color:#fff;font-weight:600}
+#stat{margin-left:auto;color:var(--muted);font-size:12px;white-space:nowrap;padding-left:12px}
+#chartPane{width:360px;flex:none;background:var(--panel);border-left:1px solid var(--rule);display:none;flex-direction:column;gap:8px;padding:10px;overflow:auto}
+#chartPane.show{display:flex}
+#chartPane canvas{width:100%;height:240px;background:#15161a;border-radius:10px}
+#chartPane label{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+#chartPane label input,#chartPane label select{flex:1;background:var(--panel2);border:1px solid var(--rule);border-radius:7px;padding:5px 7px}
+.seg{display:flex;flex-wrap:wrap;gap:3px}
+.seg button{border:1px solid var(--rule);background:var(--panel2);border-radius:8px;padding:5px 9px;cursor:pointer;font-size:13px}
+.seg button.on{background:var(--accent);border-color:var(--accent);color:#06210f;font-weight:600}
+.pop{position:fixed;z-index:30;background:var(--panel);border:1px solid var(--rule);border-radius:14px;box-shadow:0 16px 36px rgba(0,0,0,.5);padding:8px;max-height:calc(100vh - 100px);overflow:auto}
+.pop .mi{display:flex;width:100%;gap:10px;align-items:baseline;border:0;background:transparent;padding:8px 10px;border-radius:8px;cursor:pointer;text-align:left}
+.pop .mi:hover{background:var(--panel2)}
+.pop .mi code{font:600 13px ui-monospace,Menlo,monospace;color:var(--accent);min-width:110px}
+.pop .mi small{color:var(--muted)}
+.pop .cap{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:6px 10px 2px}
+.pop hr{border:0;border-top:1px solid var(--rule);margin:4px}
+.swatches{display:grid;grid-template-columns:repeat(8,26px);gap:5px}
+.swatches i{width:26px;height:26px;border-radius:6px;cursor:pointer;border:1px solid rgba(0,0,0,.35)}
+.btn{border:1px solid var(--rule);background:var(--panel2);border-radius:9px;padding:7px 12px;cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#06210f;font-weight:600}
+.btn.sm{padding:4px 9px;font-size:12px}
+dialog{background:var(--panel);color:var(--ink);border:1px solid var(--rule);border-radius:18px;padding:0;width:min(560px,94vw)}
+dialog::backdrop{background:rgba(0,0,0,.55)}
+.dlg{padding:18px;display:flex;flex-direction:column;gap:12px}
+.dlg h2{margin:0;font-size:19px}
+.choice{display:flex;flex-direction:column;gap:8px}
+.choice button{padding:12px 14px;border-radius:12px;border:1px solid var(--rule);background:var(--panel2);cursor:pointer;text-align:left}
+.choice button.on{border-color:var(--accent);background:#1d3d2c}
+.choice b{display:block}.choice small{color:var(--muted)}
+.small{font-size:12px;color:var(--muted)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+#toast{position:fixed;left:50%;bottom:64px;transform:translateX(-50%);background:rgba(10,10,14,.94);border:1px solid var(--rule);padding:8px 14px;border-radius:999px;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:50;max-width:90vw;text-align:center}
+#toast.show{opacity:1}
+#gallery{position:fixed;inset:0;background:#131417;z-index:40;padding:16px;padding-top:calc(16px + env(safe-area-inset-top));overflow:auto}
+#gallery[hidden]{display:none}
+#gallery header{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+#gallery h1{margin:0;font-size:26px}
+#glist{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+.gcard{background:var(--panel);border:1px solid var(--rule);border-radius:12px;padding:12px;cursor:pointer;position:relative}
+.gcard small{color:var(--muted)}
+.gcard .del{position:absolute;right:6px;top:6px;border:0;border-radius:999px;width:28px;height:28px;background:rgba(0,0,0,.5);color:#fff;cursor:pointer}
+body.embed #galleryBtn{display:none}
+@media (max-width:760px){#chartPane{position:fixed;right:0;top:120px;bottom:50px;z-index:20;width:min(360px,92vw)}#bookName{width:120px}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header id="top">
+    <button class="tb" id="galleryBtn" title="All spreadsheets">▤</button>
+    <span class="brand">▦ <b>Calsheet</b></span>
+    <input id="bookName" aria-label="Spreadsheet name" maxlength="60">
+    <button class="tb" id="undoBtn" title="Undo (two-finger tap)"><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
+    <button class="tb" id="redoBtn" title="Redo (three-finger tap)"><svg viewBox="0 0 24 24"><path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/></svg></button>
+    <span class="grow"></span>
+    <button class="tb" id="chartBtn" title="Chart from the selected cells">📊 Chart</button>
+    <button class="tb" id="menuBtn" title="Spreadsheet">⋯</button>
+  </header>
+  <div id="ribbon"></div>
+  <div id="fbar"><input id="nameBox" aria-label="Cell" title="Type a cell or range, e.g. B4 or A1:C10"><span id="fx">fx</span><input id="formula" aria-label="Contents" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Type a value, or = for a formula"></div>
+  <div id="main">
+    <div id="gridWrap"><div id="gridInner"><table id="grid"></table><div id="selBox"><span class="edge t" title="Drag to move"></span><span class="edge b" title="Drag to move"></span><span class="edge l" title="Drag to move"></span><span class="edge r" title="Drag to move"></span><span class="knob" title="Drag to select more cells"></span></div><div id="ghost"></div><div id="actBar" role="toolbar" aria-label="Cell actions"></div><div id="refBox"></div><input id="cellEd" autocomplete="off" autocapitalize="off" spellcheck="false"></div></div>
+    <aside id="chartPane"></aside>
+  </div>
+  <div id="tabs"></div>
+</div>
+<div id="gallery" hidden><header><h1>▦ Calsheet</h1><span class="grow"></span><button class="btn primary" id="gNew">＋ New spreadsheet</button></header><div id="glist"></div></div>
+<div id="toast" role="status"></div>
+<script>
+'use strict';
+(() => {
+  const $ = s => document.querySelector(s);
+  const h = (tag, attrs, ...kids) => { const e = document.createElement(tag); for (const [k, v] of Object.entries(attrs || {})) { if (v == null || v === false) continue; if (k.startsWith('on')) e.addEventListener(k.slice(2), v); else if (k === 'class') e.className = v; else if (k === 'style') e.style.cssText = v; else if (k in e && k !== 'list') try { e[k] = v; } catch (x) { e.setAttribute(k, v); } else e.setAttribute(k, v); } for (const c of kids.flat()) if (c != null) e.append(c.nodeType ? c : String(c)); return e; };
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  let tt = 0; const toast = (m, ms) => { const t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), ms || 2200); };
+  const QS = new URLSearchParams(location.search), EMBED = QS.has('embed');
+  if (EMBED) document.body.classList.add('embed');
+
+  /* ================= addresses ================= */
+  const colName = i => { let s = ''; i++; while (i > 0) { const m = (i - 1) % 26; s = String.fromCharCode(65 + m) + s; i = Math.floor((i - 1) / 26); } return s; };
+  const colIndex = s => { let n = 0; for (const ch of s.toUpperCase()) n = n * 26 + ch.charCodeAt(0) - 64; return n - 1; };
+  const addr = (r, c) => colName(c) + (r + 1);
+  const parseAddr = a => { const m = /^\$?([A-Za-z]{1,3})\$?(\d+)$/.exec(a); return m ? { r: +m[2] - 1, c: colIndex(m[1]) } : null; };
+
+  /* ================= book ================= */
+  let book = null, sh = null;     // current sheet
+  const newSheet = name => ({ id: 'S' + uid(), name, cells: {}, cw: {}, nr: 200, nc: 26 });
+  const newBook = () => ({ id: 'book_' + uid(), name: 'Untitled spreadsheet', sheets: [newSheet('Sheet 1')], active: 0, chart: { kind: 'bar', title: '', xl: '', yl: '' }, created: Date.now(), updated: Date.now() });
+  const cellAt = (s, r, c) => s.cells[addr(r, c)];
+  const sheetByName = n => book.sheets.find(s => s.name.toLowerCase() === String(n).toLowerCase());
+
+  /* ================= formula engine ================= */
+  class Err { constructor(e) { this.e = e; } toString() { return this.e; } }
+  const E = { div: new Err('#DIV/0!'), val: new Err('#VALUE!'), ref: new Err('#REF!'), name: new Err('#NAME?'), na: new Err('#N/A'), num: new Err('#NUM!'), cyc: new Err('#CYCLE!') };
+  const isErr = v => v instanceof Err;
+  function tokenize(src) {
+    const T = []; let i = 0;
+    const RE_REF = /^(?:('(?:[^']|'')+'|[A-Za-z_][\w.]*)!)?(\$?[A-Za-z]{1,3}\$?\d+)(?::(\$?[A-Za-z]{1,3}\$?\d+))?/;
+    while (i < src.length) {
+      const ch = src[i];
+      if (/\s/.test(ch)) { i++; continue; }
+      if (ch === '"') { let j = i + 1, s = ''; while (j < src.length) { if (src[j] === '"') { if (src[j + 1] === '"') { s += '"'; j += 2; continue; } break; } s += src[j++]; } T.push({ t: 'str', v: s }); i = j + 1; continue; }
+      const num = /^(\d+\.?\d*|\.\d+)(e[+-]?\d+)?/i.exec(src.slice(i)); if (num && !/[A-Za-z_]/.test(src[i + num[0].length] || '')) { T.push({ t: 'num', v: parseFloat(num[0]) }); i += num[0].length; continue; }
+      const rest = src.slice(i), rm = RE_REF.exec(rest);
+      if (rm && !/^[\w(]/.test(rest.slice(rm[0].length)) ) { T.push({ t: 'ref', sheet: rm[1] ? rm[1].replace(/^'|'$/g, '').replace(/''/g, "'") : null, a: rm[2], b: rm[3] || null }); i += rm[0].length; continue; }
+      const id = /^[A-Za-z_][\w.]*/.exec(rest);
+      if (id) { const w = id[0].toUpperCase(); i += id[0].length; if (src[i] === '(') { T.push({ t: 'fn', v: w }); i++; } else if (w === 'TRUE' || w === 'FALSE') T.push({ t: 'bool', v: w === 'TRUE' }); else T.push({ t: 'name', v: w }); continue; }
+      const two = src.substr(i, 2); if (['<=', '>=', '<>'].includes(two)) { T.push({ t: 'op', v: two }); i += 2; continue; }
+      if ('+-*/^&=<>(),%:;'.includes(ch)) { T.push({ t: ch === '(' || ch === ')' || ch === ',' || ch === ';' ? ch === ';' ? ',' : ch : 'op', v: ch }); i++; continue; }
+      throw E.name;
+    }
+    return T;
+  }
+  function parse(src) {
+    const T = tokenize(src); let p = 0;
+    const peek = () => T[p], next = () => T[p++], isOp = (...o) => T[p] && T[p].t === 'op' && o.includes(T[p].v);
+    const cmp = () => { let a = cat(); while (isOp('=', '<>', '<', '>', '<=', '>=')) { const o = next().v; a = { k: 'bin', o, a, b: cat() }; } return a; };
+    const cat = () => { let a = add(); while (isOp('&')) { next(); a = { k: 'bin', o: '&', a, b: add() }; } return a; };
+    const add = () => { let a = mul(); while (isOp('+', '-')) { const o = next().v; a = { k: 'bin', o, a, b: mul() }; } return a; };
+    const mul = () => { let a = pow(); while (isOp('*', '/')) { const o = next().v; a = { k: 'bin', o, a, b: pow() }; } return a; };
+    const pow = () => { let a = un(); while (isOp('^')) { next(); a = { k: 'bin', o: '^', a, b: un() }; } return a; };
+    const un = () => { if (isOp('-')) { next(); return { k: 'neg', a: un() }; } if (isOp('+')) { next(); return un(); } let a = prim(); while (isOp('%')) { next(); a = { k: 'pct', a }; } return a; };
+    const prim = () => {
+      const t = next(); if (!t) throw E.val;
+      if (t.t === 'num') return { k: 'num', v: t.v }; if (t.t === 'str') return { k: 'str', v: t.v }; if (t.t === 'bool') return { k: 'bool', v: t.v };
+      if (t.t === 'ref') return { k: 'ref', sheet: t.sheet, a: t.a, b: t.b };
+      if (t.t === 'name') return { k: 'name', v: t.v };
+      if (t.t === '(') { const e = cmp(); if (!peek() || next().t !== ')') throw E.val; return e; }
+      if (t.t === 'fn') { const args = []; if (peek() && peek().t === ')') { next(); return { k: 'fn', v: t.v, args }; } for (; ;) { if (peek() && (peek().t === ',' || peek().t === ')')) args.push({ k: 'blank' }); else args.push(cmp()); const s = next(); if (!s) throw E.val; if (s.t === ')') break; if (s.t !== ',') throw E.val; } return { k: 'fn', v: t.v, args }; }
+      throw E.val;
+    };
+    const e = cmp(); if (p < T.length) throw E.val; return e;
+  }
+  const astCache = new Map();
+  const astOf = src => { let a = astCache.get(src); if (!a) { try { a = parse(src); } catch (e) { a = { k: 'err', e: isErr(e) ? e : E.val }; } if (astCache.size > 5000) astCache.clear(); astCache.set(src, a); } return a; };
+  // values: number | string | boolean | Err | null (blank) | {arr:[[...]]}
+  let memo = new Map(), visiting = new Set();
+  function literal(raw) {
+    if (raw == null || raw === '') return null;
+    const s = String(raw).trim();
+    if (/^[-+]?(\d+\.?\d*|\.\d+)(e[-+]?\d+)?$/i.test(s)) return parseFloat(s);
+    if (/^[-+]?\d+(\.\d+)?%$/.test(s)) return parseFloat(s) / 100;
+    if (/^(true|false)$/i.test(s)) return /^true$/i.test(s);
+    return String(raw);
+  }
+  function valueOf(sheet, r, c) {
+    const key = sheet.id + '|' + r + '|' + c; if (memo.has(key)) return memo.get(key);
+    const cell = sheet.cells[addr(r, c)]; if (!cell || cell.v == null || cell.v === '') return null;
+    let v;
+    if (typeof cell.v === 'string' && cell.v[0] === '=' && cell.v.length > 1) {
+      if (visiting.has(key)) return E.cyc; visiting.add(key);
+      try { v = evalNode(astOf(cell.v.slice(1)), sheet); if (v && v.arr) v = v.arr[0] ? v.arr[0][0] : null; if (v == null) v = 0; } catch (e) { v = isErr(e) ? e : E.val; }
+      visiting.delete(key);
+    } else v = literal(cell.v);
+    memo.set(key, v); return v;
+  }
+  function rangeVals(sheet, a, b) {
+    const A = parseAddr(a), B = b ? parseAddr(b) : A; if (!A || !B) throw E.ref;
+    const r0 = Math.min(A.r, B.r), r1 = Math.max(A.r, B.r), c0 = Math.min(A.c, B.c), c1 = Math.max(A.c, B.c), arr = [];
+    for (let r = r0; r <= r1; r++) { const row = []; for (let c = c0; c <= c1; c++) row.push(valueOf(sheet, r, c)); arr.push(row); }
+    return { arr };
+  }
+  const toNum = v => { if (isErr(v)) throw v; if (v == null || v === '') return 0; if (typeof v === 'boolean') return v ? 1 : 0; if (typeof v === 'number') return v; const n = literal(v); if (typeof n === 'number') return n; const d = parseDate(v); if (d != null) return d; throw E.val; };
+  const toStr = v => { if (isErr(v)) throw v; if (v == null) return ''; if (typeof v === 'boolean') return v ? 'TRUE' : 'FALSE'; if (typeof v === 'number') return fmtGeneral(v); return String(v); };
+  const toBool = v => { if (isErr(v)) throw v; if (typeof v === 'string') { if (/^true$/i.test(v)) return true; if (/^false$/i.test(v)) return false; throw E.val; } return !!v; };
+  const scalar = v => v && v.arr ? (v.arr[0] ? v.arr[0][0] : null) : v;
+  function evalNode(n, sheet) {
+    switch (n.k) {
+      case 'num': case 'str': case 'bool': return n.v;
+      case 'blank': return null;
+      case 'err': throw n.e;
+      case 'name': throw E.name;
+      case 'ref': { const s = n.sheet ? sheetByName(n.sheet) : sheet; if (!s) throw E.ref; if (n.b) return rangeVals(s, n.a, n.b); const A = parseAddr(n.a); if (!A) throw E.ref; const v = valueOf(s, A.r, A.c); if (isErr(v)) throw v; return v; }
+      case 'neg': return -toNum(scalar(evalNode(n.a, sheet)));
+      case 'pct': return toNum(scalar(evalNode(n.a, sheet))) / 100;
+      case 'bin': {
+        const a = scalar(evalNode(n.a, sheet)), b = scalar(evalNode(n.b, sheet));
+        switch (n.o) {
+          case '+': return toNum(a) + toNum(b); case '-': return toNum(a) - toNum(b); case '*': return toNum(a) * toNum(b);
+          case '/': { const d = toNum(b); if (d === 0) throw E.div; return toNum(a) / d; }
+          case '^': { const r = Math.pow(toNum(a), toNum(b)); if (!isFinite(r)) throw E.num; return r; }
+          case '&': return toStr(a) + toStr(b);
+          default: { if (isErr(a)) throw a; if (isErr(b)) throw b; const A = a == null ? (typeof b === 'string' ? '' : 0) : a, B = b == null ? (typeof a === 'string' ? '' : 0) : b; let c; if (typeof A === 'string' && typeof B === 'string') c = A.toLowerCase() < B.toLowerCase() ? -1 : A.toLowerCase() > B.toLowerCase() ? 1 : 0; else if (typeof A === 'string') c = 1; else if (typeof B === 'string') c = -1; else c = A < B ? -1 : A > B ? 1 : 0; return { '=': c === 0, '<>': c !== 0, '<': c < 0, '>': c > 0, '<=': c <= 0, '>=': c >= 0 }[n.o]; }
+        }
+      }
+      case 'fn': {
+        const F = FN[n.v]; if (!F) throw E.name;
+        if (F.lazy) return F(n.args, sheet);
+        return F(...n.args.map(a => evalNode(a, sheet)));
+      }
+    }
+    throw E.val;
+  }
+  // helpers for functions
+  const flat = args => { const out = []; for (const a of args) { if (a && a.arr) for (const row of a.arr) for (const v of row) out.push({ v, fromRange: true }); else out.push({ v: a, fromRange: false }); } return out; };
+  const nums = args => { const out = []; for (const { v, fromRange } of flat(args)) { if (isErr(v)) throw v; if (fromRange) { if (typeof v === 'number') out.push(v); } else if (v != null) out.push(toNum(v)); } return out; };
+  const vecs = a => (a && a.arr ? a.arr.flat() : [a]);
+  const crit = c => {
+    if (typeof c === 'number') return v => typeof v === 'number' && v === c;
+    const s = String(c ?? ''), m = /^(<=|>=|<>|<|>|=)?(.*)$/.exec(s), op = m[1] || '=', rhs = m[2], n = literal(rhs);
+    if (typeof n === 'number') return v => { const x = typeof v === 'number' ? v : literal(v); if (typeof x !== 'number') return op === '<>'; return { '=': x === n, '<>': x !== n, '<': x < n, '>': x > n, '<=': x <= n, '>=': x >= n }[op]; };
+    const re = new RegExp('^' + rhs.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*').replace(/\?/g, '.') + '$', 'i');
+    return v => { const t = v == null ? '' : String(v); return op === '<>' ? !re.test(t) : op === '=' ? re.test(t) : false; };
+  };
+  const mean = a => a.reduce((s, x) => s + x, 0) / a.length;
+  const variance = (a, pop) => { if (a.length < (pop ? 1 : 2)) throw E.div; const m = mean(a); return a.reduce((s, x) => s + (x - m) ** 2, 0) / (a.length - (pop ? 0 : 1)); };
+  const pairs = (A, B) => { const x = vecs(A), y = vecs(B); if (x.length !== y.length) throw E.na; const X = [], Y = []; for (let i = 0; i < x.length; i++) if (typeof x[i] === 'number' && typeof y[i] === 'number') { X.push(x[i]); Y.push(y[i]); } return [X, Y]; };
+  const lnGamma = z => { const g = [676.5203681218851, -1259.1392167224028, 771.32342877765313, -176.61502916214059, 12.507343278686905, -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7]; if (z < 0.5) return Math.log(Math.PI / Math.abs(Math.sin(Math.PI * z))) - lnGamma(1 - z); z -= 1; let x = 0.99999999999980993; for (let i = 0; i < 8; i++) x += g[i] / (z + i + 1); const t = z + 7.5; return 0.5 * Math.log(2 * Math.PI) + (z + 0.5) * Math.log(t) - t + Math.log(x); };
+  function betacf(a, b, x) { let qab = a + b, qap = a + 1, qam = a - 1, c = 1, d = 1 - qab * x / qap; if (Math.abs(d) < 1e-30) d = 1e-30; d = 1 / d; let hh = d; for (let m = 1; m <= 200; m++) { const m2 = 2 * m; let aa = m * (b - m) * x / ((qam + m2) * (a + m2)); d = 1 + aa * d; if (Math.abs(d) < 1e-30) d = 1e-30; c = 1 + aa / c; if (Math.abs(c) < 1e-30) c = 1e-30; d = 1 / d; hh *= d * c; aa = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2)); d = 1 + aa * d; if (Math.abs(d) < 1e-30) d = 1e-30; c = 1 + aa / c; if (Math.abs(c) < 1e-30) c = 1e-30; d = 1 / d; const del = d * c; hh *= del; if (Math.abs(del - 1) < 3e-14) break; } return hh; }
+  const ibeta = (x, a, b) => { if (x <= 0) return 0; if (x >= 1) return 1; const bt = Math.exp(lnGamma(a + b) - lnGamma(a) - lnGamma(b) + a * Math.log(x) + b * Math.log(1 - x)); return x < (a + 1) / (a + b + 2) ? bt * betacf(a, b, x) / a : 1 - bt * betacf(b, a, 1 - x) / b; };
+  const tTwoTail = (t, df) => ibeta(df / (df + t * t), df / 2, 0.5);
+  const erf = x => { const s = Math.sign(x); x = Math.abs(x); const t = 1 / (1 + 0.3275911 * x), y = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x); return s * y; };
+  const normCdf = z => 0.5 * (1 + erf(z / Math.SQRT2));
+  const normInv = p => { if (p <= 0 || p >= 1) throw E.num; const a = [-3.969683028665376e1, 2.209460984245205e2, -2.759285104469687e2, 1.383577518672690e2, -3.066479806614716e1, 2.506628277459239], b = [-5.447609879822406e1, 1.615858368580409e2, -1.556989798598866e2, 6.680131188771972e1, -1.328068155288572e1], c = [-7.784894002430293e-3, -3.223964580411365e-1, -2.400758277161838, -2.549732539343734, 4.374664141464968, 2.938163982698783], d = [7.784695709041462e-3, 3.224671290700398e-1, 2.445134137142996, 3.754408661907416]; const pl = 0.02425; let q, r; if (p < pl) { q = Math.sqrt(-2 * Math.log(p)); return (((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) / ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1); } if (p <= 1 - pl) { q = p - 0.5; r = q * q; return (((((a[0] * r + a[1]) * r + a[2]) * r + a[3]) * r + a[4]) * r + a[5]) * q / (((((b[0] * r + b[1]) * r + b[2]) * r + b[3]) * r + b[4]) * r + 1); } q = Math.sqrt(-2 * Math.log(1 - p)); return -(((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) / ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1); };
+  // dates are day numbers (1 = 1 Jan 1900, as in other spreadsheets)
+  const EPOCH = Date.UTC(1899, 11, 30), DAY = 864e5;
+  const serial = (y, m, d) => (Date.UTC(y, m - 1, d) - EPOCH) / DAY;
+  const fromSerial = n => new Date(EPOCH + Math.round(n * DAY));
+  function parseDate(s) { s = String(s).trim(); let m = /^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})$/.exec(s); if (m) { let y = +m[3]; if (y < 100) y += 2000; return serial(y, +m[2], +m[1]); } m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(s); if (m) return serial(+m[1], +m[2], +m[3]); return null; }
+  const lazyIf = (args, s) => { const c = toBool(scalar(evalNode(args[0], s))); return evalNode(c ? args[1] : (args[2] || { k: 'bool', v: false }), s); };
+  lazyIf.lazy = true;
+  const lazyIfErr = (args, s) => { try { const v = evalNode(args[0], s); if (isErr(scalar(v))) throw scalar(v); return v; } catch (e) { if (isErr(e)) return evalNode(args[1], s); throw e; } };
+  lazyIfErr.lazy = true;
+  const lookupIdx = (x, list, exact) => { x = scalar(x); if (exact) { const xs = typeof x === 'string' ? x.toLowerCase() : x; const i = list.findIndex(v => (typeof v === 'string' ? v.toLowerCase() : v) === xs); if (i < 0) throw E.na; return i; } let best = -1; for (let i = 0; i < list.length; i++) { if (typeof list[i] === typeof x && list[i] <= x) best = i; } if (best < 0) throw E.na; return best; };
+  const FN = {
+    SUM: (...a) => nums(a).reduce((s, x) => s + x, 0), AVERAGE: (...a) => { const n = nums(a); if (!n.length) throw E.div; return mean(n); }, MIN: (...a) => { const n = nums(a); return n.length ? Math.min(...n) : 0; }, MAX: (...a) => { const n = nums(a); return n.length ? Math.max(...n) : 0; },
+    COUNT: (...a) => flat(a).filter(({ v }) => typeof v === 'number').length, COUNTA: (...a) => flat(a).filter(({ v }) => v != null && v !== '').length, COUNTBLANK: (...a) => flat(a).filter(({ v }) => v == null || v === '').length,
+    PRODUCT: (...a) => nums(a).reduce((s, x) => s * x, 1), SUMSQ: (...a) => nums(a).reduce((s, x) => s + x * x, 0),
+    MEDIAN: (...a) => { const n = nums(a).sort((x, y) => x - y); if (!n.length) throw E.num; const m = n.length >> 1; return n.length % 2 ? n[m] : (n[m - 1] + n[m]) / 2; },
+    MODE: (...a) => { const n = nums(a), f = new Map(); let best = null, bc = 1; for (const x of n) { const c = (f.get(x) || 0) + 1; f.set(x, c); if (c > bc) { bc = c; best = x; } } if (best == null) throw E.na; return best; },
+    STDEV: (...a) => Math.sqrt(variance(nums(a))), 'STDEV.S': (...a) => Math.sqrt(variance(nums(a))), 'STDEV.P': (...a) => Math.sqrt(variance(nums(a), true)), STDEVP: (...a) => Math.sqrt(variance(nums(a), true)),
+    VAR: (...a) => variance(nums(a)), 'VAR.S': (...a) => variance(nums(a)), 'VAR.P': (...a) => variance(nums(a), true),
+    GEOMEAN: (...a) => { const n = nums(a); if (n.some(x => x <= 0)) throw E.num; return Math.exp(mean(n.map(Math.log))); },
+    SEM: (...a) => { const n = nums(a); return Math.sqrt(variance(n)) / Math.sqrt(n.length); },
+    LARGE: (r, k) => { const n = nums([r]).sort((x, y) => y - x), i = toNum(k) - 1; if (i < 0 || i >= n.length) throw E.num; return n[i]; }, SMALL: (r, k) => { const n = nums([r]).sort((x, y) => x - y), i = toNum(k) - 1; if (i < 0 || i >= n.length) throw E.num; return n[i]; },
+    RANK: (x, r, o) => { const n = nums([r]), v = toNum(x), asc = o != null && toNum(o) !== 0; const s = n.slice().sort((a, b) => asc ? a - b : b - a), i = s.indexOf(v); if (i < 0) throw E.na; return i + 1; },
+    IF: lazyIf, IFERROR: lazyIfErr, AND: (...a) => flat(a).every(({ v }) => toBool(v)), OR: (...a) => flat(a).some(({ v }) => toBool(v)), NOT: a => !toBool(scalar(a)), XOR: (...a) => flat(a).filter(({ v }) => toBool(v)).length % 2 === 1,
+    ROUND: (x, d) => { const k = Math.pow(10, toNum(d)); return Math.round(toNum(x) * k + (toNum(x) >= 0 ? 1e-9 : -1e-9)) / k; }, ROUNDUP: (x, d) => { const k = Math.pow(10, toNum(d)), v = toNum(x); return Math.sign(v) * Math.ceil(Math.abs(v) * k - 1e-9) / k; }, ROUNDDOWN: (x, d) => { const k = Math.pow(10, toNum(d)), v = toNum(x); return Math.sign(v) * Math.floor(Math.abs(v) * k + 1e-9) / k; },
+    INT: x => Math.floor(toNum(x)), TRUNC: x => Math.trunc(toNum(x)), ABS: x => Math.abs(toNum(x)), SIGN: x => Math.sign(toNum(x)),
+    SQRT: x => { const v = toNum(x); if (v < 0) throw E.num; return Math.sqrt(v); }, POWER: (x, y) => Math.pow(toNum(x), toNum(y)), EXP: x => Math.exp(toNum(x)),
+    LN: x => { const v = toNum(x); if (v <= 0) throw E.num; return Math.log(v); }, LOG10: x => { const v = toNum(x); if (v <= 0) throw E.num; return Math.log10(v); }, LOG: (x, b) => { const v = toNum(x), B = b == null ? 10 : toNum(b); if (v <= 0 || B <= 0) throw E.num; return Math.log(v) / Math.log(B); },
+    PI: () => Math.PI, MOD: (x, y) => { const d = toNum(y); if (d === 0) throw E.div; const v = toNum(x); return v - d * Math.floor(v / d); }, CEILING: (x, s) => { const k = s == null ? 1 : toNum(s); return Math.ceil(toNum(x) / k) * k; }, FLOOR: (x, s) => { const k = s == null ? 1 : toNum(s); return Math.floor(toNum(x) / k) * k; },
+    FACT: x => { let n = Math.floor(toNum(x)), f = 1; if (n < 0) throw E.num; while (n > 1) f *= n--; return f; }, RAND: () => Math.random(), RANDBETWEEN: (a, b) => Math.floor(toNum(a) + Math.random() * (toNum(b) - toNum(a) + 1)),
+    SIN: x => Math.sin(toNum(x)), COS: x => Math.cos(toNum(x)), TAN: x => Math.tan(toNum(x)), ASIN: x => Math.asin(toNum(x)), ACOS: x => Math.acos(toNum(x)), ATAN: x => Math.atan(toNum(x)), ATAN2: (x, y) => Math.atan2(toNum(y), toNum(x)), DEGREES: x => toNum(x) * 180 / Math.PI, RADIANS: x => toNum(x) * Math.PI / 180,
+    COUNTIF: (r, c) => { const f = crit(scalar(c)); return vecs(r).filter(f).length; },
+    SUMIF: (r, c, s) => { const f = crit(scalar(c)), R = vecs(r), S = s ? vecs(s) : R; let t = 0; R.forEach((v, i) => { if (f(v) && typeof S[i] === 'number') t += S[i]; }); return t; },
+    AVERAGEIF: (r, c, s) => { const f = crit(scalar(c)), R = vecs(r), S = s ? vecs(s) : R, v2 = []; R.forEach((v, i) => { if (f(v) && typeof S[i] === 'number') v2.push(S[i]); }); if (!v2.length) throw E.div; return mean(v2); },
+    COUNTIFS: (...a) => { const n = vecs(a[0]).length; let ok = new Array(n).fill(true); for (let k = 0; k < a.length; k += 2) { const f = crit(scalar(a[k + 1])), R = vecs(a[k]); ok = ok.map((o, i) => o && f(R[i])); } return ok.filter(Boolean).length; },
+    SUMIFS: (s, ...a) => { const S = vecs(s); let ok = new Array(S.length).fill(true); for (let k = 0; k < a.length; k += 2) { const f = crit(scalar(a[k + 1])), R = vecs(a[k]); ok = ok.map((o, i) => o && f(R[i])); } return S.reduce((t, v, i) => t + (ok[i] && typeof v === 'number' ? v : 0), 0); },
+    LEN: s => toStr(scalar(s)).length, UPPER: s => toStr(scalar(s)).toUpperCase(), LOWER: s => toStr(scalar(s)).toLowerCase(), PROPER: s => toStr(scalar(s)).toLowerCase().replace(/(^|[^a-z’'])([a-z])/g, (m, a, b) => a + b.toUpperCase()), TRIM: s => toStr(scalar(s)).trim().replace(/\s+/g, ' '),
+    LEFT: (s, n) => toStr(scalar(s)).slice(0, n == null ? 1 : toNum(n)), RIGHT: (s, n) => { const t = toStr(scalar(s)), k = n == null ? 1 : toNum(n); return k ? t.slice(-k) : ''; }, MID: (s, a, n) => toStr(scalar(s)).substr(toNum(a) - 1, toNum(n)),
+    FIND: (f, s, st) => { const i = toStr(scalar(s)).indexOf(toStr(scalar(f)), st ? toNum(st) - 1 : 0); if (i < 0) throw E.val; return i + 1; }, SEARCH: (f, s, st) => { const i = toStr(scalar(s)).toLowerCase().indexOf(toStr(scalar(f)).toLowerCase(), st ? toNum(st) - 1 : 0); if (i < 0) throw E.val; return i + 1; },
+    SUBSTITUTE: (s, a, b) => toStr(scalar(s)).split(toStr(scalar(a))).join(toStr(scalar(b))), REPT: (s, n) => toStr(scalar(s)).repeat(Math.max(0, toNum(n))),
+    CONCAT: (...a) => flat(a).map(({ v }) => toStr(v)).join(''), CONCATENATE: (...a) => flat(a).map(({ v }) => toStr(v)).join(''), TEXTJOIN: (d, ig, ...a) => flat(a).map(({ v }) => v).filter(v => !(toBool(ig) && (v == null || v === ''))).map(toStr).join(toStr(scalar(d))),
+    TEXT: (v, f) => formatWith(toNum(scalar(v)), toStr(scalar(f))), VALUE: s => toNum(scalar(s)), T: s => typeof scalar(s) === 'string' ? scalar(s) : '',
+    DATE: (y, m, d) => serial(toNum(y), toNum(m), toNum(d)), TODAY: () => Math.floor((Date.now() - new Date().getTimezoneOffset() * 6e4 - EPOCH) / DAY), NOW: () => (Date.now() - new Date().getTimezoneOffset() * 6e4 - EPOCH) / DAY,
+    YEAR: d => fromSerial(toNum(d)).getUTCFullYear(), MONTH: d => fromSerial(toNum(d)).getUTCMonth() + 1, DAY: d => fromSerial(toNum(d)).getUTCDate(), WEEKDAY: d => fromSerial(toNum(d)).getUTCDay() + 1, DAYS: (a, b) => Math.round(toNum(a) - toNum(b)),
+    VLOOKUP: (x, r, c, ap) => { const A = r.arr, ci = toNum(c) - 1; if (!A || ci < 0 || ci >= A[0].length) throw E.ref; const i = lookupIdx(x, A.map(row => row[0]), ap != null && !toBool(scalar(ap))); return A[i][ci]; },
+    HLOOKUP: (x, r, c, ap) => { const A = r.arr, ri = toNum(c) - 1; if (!A || ri < 0 || ri >= A.length) throw E.ref; const i = lookupIdx(x, A[0], ap != null && !toBool(scalar(ap))); return A[ri][i]; },
+    INDEX: (r, i, j) => { const A = r.arr || [[r]], ri = toNum(i) - 1, cj = j == null ? 0 : toNum(j) - 1; const rr = A.length === 1 && j == null ? 0 : ri, cc = A.length === 1 && j == null ? ri : cj; if (!A[rr] || A[rr][cc] === undefined) throw E.ref; return A[rr][cc]; },
+    MATCH: (x, r, t) => lookupIdx(x, vecs(r), t != null && toNum(t) === 0) + 1,
+    XLOOKUP: (x, l, r, nf) => { try { const i = lookupIdx(x, vecs(l), true); return vecs(r)[i]; } catch (e) { if (nf !== undefined && nf !== null) return scalar(nf); throw e; } },
+    SUMPRODUCT: (...a) => { const V = a.map(vecs), n = V[0].length; let t = 0; for (let i = 0; i < n; i++) t += V.reduce((p, v) => p * (typeof v[i] === 'number' ? v[i] : 0), 1); return t; },
+    CORREL: (a, b) => { const [X, Y] = pairs(a, b), mx = mean(X), my = mean(Y); let sxy = 0, sx = 0, sy = 0; for (let i = 0; i < X.length; i++) { sxy += (X[i] - mx) * (Y[i] - my); sx += (X[i] - mx) ** 2; sy += (Y[i] - my) ** 2; } if (!sx || !sy) throw E.div; return sxy / Math.sqrt(sx * sy); },
+    SLOPE: (ys, xs) => { const [Y, X] = pairs(ys, xs), mx = mean(X), my = mean(Y); let n = 0, d = 0; for (let i = 0; i < X.length; i++) { n += (X[i] - mx) * (Y[i] - my); d += (X[i] - mx) ** 2; } if (!d) throw E.div; return n / d; },
+    INTERCEPT: (ys, xs) => { const [Y, X] = pairs(ys, xs); return mean(Y) - FN.SLOPE(ys, xs) * mean(X); },
+    'FORECAST.LINEAR': (x, ys, xs) => FN.INTERCEPT(ys, xs) + FN.SLOPE(ys, xs) * toNum(scalar(x)),
+    'COVARIANCE.S': (a, b) => { const [X, Y] = pairs(a, b), mx = mean(X), my = mean(Y); return X.reduce((s, x, i) => s + (x - mx) * (Y[i] - my), 0) / (X.length - 1); },
+    'T.TEST': (a, b, tails, type) => { const X = nums([a]), Y = nums([b]), tl = toNum(tails), ty = toNum(type); let t, df;
+      if (ty === 1) { const [P, Q] = pairs(a, b), D = P.map((x, i) => x - Q[i]); df = D.length - 1; t = mean(D) / Math.sqrt(variance(D) / D.length); }
+      else if (ty === 2) { df = X.length + Y.length - 2; const sp = ((X.length - 1) * variance(X) + (Y.length - 1) * variance(Y)) / df; t = (mean(X) - mean(Y)) / Math.sqrt(sp * (1 / X.length + 1 / Y.length)); }
+      else { const vx = variance(X) / X.length, vy = variance(Y) / Y.length; t = (mean(X) - mean(Y)) / Math.sqrt(vx + vy); df = (vx + vy) ** 2 / (vx * vx / (X.length - 1) + vy * vy / (Y.length - 1)); }
+      const p = tTwoTail(Math.abs(t), df); return tl === 1 ? p / 2 : p; },
+    'T.DIST.2T': (x, df) => tTwoTail(Math.abs(toNum(x)), toNum(df)),
+    'NORM.DIST': (x, m, s, c) => { const z = (toNum(x) - toNum(m)) / toNum(s); return toBool(scalar(c)) ? normCdf(z) : Math.exp(-z * z / 2) / (toNum(s) * Math.sqrt(2 * Math.PI)); },
+    'NORM.S.DIST': (z, c) => { const v = toNum(z); return c == null || toBool(scalar(c)) ? normCdf(v) : Math.exp(-v * v / 2) / Math.sqrt(2 * Math.PI); },
+    'NORM.INV': (p, m, s) => toNum(m) + toNum(s) * normInv(toNum(p)), 'NORM.S.INV': p => normInv(toNum(p)),
+    ISNUMBER: v => typeof scalar(v) === 'number', ISTEXT: v => typeof scalar(v) === 'string', ISBLANK: v => scalar(v) == null, NA: () => { throw E.na; }
+  };
+  FN.TTEST = FN['T.TEST']; FN.PEARSON = FN.CORREL; FN.RSQ = (a, b) => FN.CORREL(a, b) ** 2; FN.FORECAST = FN['FORECAST.LINEAR']; FN.AVERAGEA = FN.AVERAGE;
+  // ISERROR needs to see errors rather than throw
+  FN.ISERROR = Object.assign((args, s) => { try { const v = scalar(evalNode(args[0], s)); return isErr(v); } catch (e) { return isErr(e); } }, { lazy: true });
+  const FNHELP = [['SUM', 'Add up numbers', 'SUM(A1:A10)'], ['AVERAGE', 'Mean', 'AVERAGE(B2:B20)'], ['MEDIAN', 'Middle value', 'MEDIAN(B2:B20)'], ['MIN', 'Smallest', 'MIN(A:A…)'], ['MAX', 'Largest', 'MAX(A1:A9)'], ['COUNT', 'How many numbers', 'COUNT(A1:A50)'], ['COUNTA', 'How many filled cells', 'COUNTA(A1:A50)'],
+    ['STDEV', 'Sample standard deviation', 'STDEV(B2:B20)'], ['SEM', 'Standard error of the mean', 'SEM(B2:B20)'], ['VAR', 'Sample variance', 'VAR(B2:B20)'], ['T.TEST', 't-test p value (tails 1 or 2; type 1 paired, 2 equal var, 3 unequal)', 'T.TEST(A2:A9,B2:B9,2,3)'], ['CORREL', 'Correlation r', 'CORREL(A2:A20,B2:B20)'], ['RSQ', 'R²', 'RSQ(B2:B20,A2:A20)'], ['SLOPE', 'Regression slope', 'SLOPE(B2:B20,A2:A20)'], ['INTERCEPT', 'Regression intercept', 'INTERCEPT(B2:B20,A2:A20)'],
+    ['NORM.DIST', 'Normal distribution', 'NORM.DIST(x,mean,sd,TRUE)'], ['NORM.INV', 'Normal quantile', 'NORM.INV(0.975,0,1)'],
+    ['IF', 'Choose by a test', 'IF(B2>5,"high","low")'], ['IFERROR', 'Fallback if an error', 'IFERROR(A1/B1,0)'], ['AND', 'All true', 'AND(A1>0,B1>0)'], ['OR', 'Any true', 'OR(A1>0,B1>0)'],
+    ['COUNTIF', 'Count matching', 'COUNTIF(A:A…,">5")'], ['SUMIF', 'Sum matching', 'SUMIF(A2:A9,"Drug",B2:B9)'], ['AVERAGEIF', 'Average matching', 'AVERAGEIF(A2:A9,"Drug",B2:B9)'],
+    ['ROUND', 'Round to places', 'ROUND(A1,2)'], ['ABS', 'Absolute value', 'ABS(A1)'], ['SQRT', 'Square root', 'SQRT(A1)'], ['POWER', 'Raise to a power', 'POWER(A1,2)'], ['LOG10', 'Log base 10', 'LOG10(A1)'], ['LN', 'Natural log', 'LN(A1)'], ['EXP', 'e to the power', 'EXP(A1)'],
+    ['VLOOKUP', 'Look up in a table', 'VLOOKUP("CLDN5",A2:C9,3,FALSE)'], ['XLOOKUP', 'Look up (simpler)', 'XLOOKUP(E2,A2:A9,C2:C9)'], ['INDEX', 'Value at a position', 'INDEX(A2:C9,2,3)'], ['MATCH', 'Position of a value', 'MATCH("x",A2:A9,0)'],
+    ['CONCAT', 'Join text', 'CONCAT(A1," ",B1)'], ['LEFT', 'First characters', 'LEFT(A1,3)'], ['LEN', 'Length of text', 'LEN(A1)'], ['UPPER', 'Capitals', 'UPPER(A1)'], ['TEXT', 'Format a number as text', 'TEXT(A1,"0.0%")'],
+    ['TODAY', 'Today’s date', 'TODAY()'], ['DATE', 'Make a date', 'DATE(2026,11,25)'], ['YEAR', 'Year of a date', 'YEAR(A1)'], ['DAYS', 'Days between dates', 'DAYS(B1,A1)'], ['SUMPRODUCT', 'Multiply and add', 'SUMPRODUCT(A2:A9,B2:B9)'], ['RAND', 'Random 0–1', 'RAND()']];
+
+  /* ================= number formats ================= */
+  function fmtGeneral(v) { if (!isFinite(v)) return '#NUM!'; if (Number.isInteger(v) && Math.abs(v) < 1e15) return String(v); const a = Math.abs(v); if (a !== 0 && (a < 1e-6 || a >= 1e15)) return v.toExponential(4).replace(/\.?0+e/, 'e'); return String(parseFloat(v.toPrecision(10))); }
+  const group = (v, dp) => v.toLocaleString('en-GB', { minimumFractionDigits: dp, maximumFractionDigits: dp });
+  function formatWith(v, f) {
+    if (/[dmy]/i.test(f) && !/0/.test(f)) { const d = fromSerial(v), p = n => String(n).padStart(2, '0'); return f.replace(/yyyy/i, d.getUTCFullYear()).replace(/yy/i, String(d.getUTCFullYear()).slice(2)).replace(/mm/, p(d.getUTCMonth() + 1)).replace(/dd/i, p(d.getUTCDate())); }
+    const pct = f.includes('%'), dpm = /\.(0+)/.exec(f), dp = dpm ? dpm[1].length : 0, x = pct ? v * 100 : v;
+    let s = f.includes(',') ? group(x, dp) : x.toFixed(dp); return f.replace(/[#0,]+(\.0+)?%?/, s + (pct ? '%' : ''));
+  }
+  function display(v, st) {
+    if (v == null) return { t: '', cls: '' };
+    if (isErr(v)) return { t: v.e, cls: 'err' };
+    if (typeof v === 'boolean') return { t: v ? 'TRUE' : 'FALSE', cls: 'bool' };
+    if (typeof v === 'string') return { t: v, cls: '' };
+    const f = (st && st.fmt) || 'gen', dp = st && st.dp != null ? st.dp : 2;
+    let t;
+    switch (f) {
+      case 'num': t = v.toFixed(dp); break; case 'thou': t = group(v, st && st.dp != null ? st.dp : 0); break;
+      case 'pct': t = (v * 100).toFixed(st && st.dp != null ? st.dp : 1) + '%'; break;
+      case 'gbp': t = (v < 0 ? '−£' : '£') + group(Math.abs(v), dp); break; case 'usd': t = (v < 0 ? '−$' : '$') + group(Math.abs(v), dp); break; case 'eur': t = (v < 0 ? '−€' : '€') + group(Math.abs(v), dp); break;
+      case 'sci': t = v.toExponential(dp); break;
+      case 'date': { const d = fromSerial(v); t = String(d.getUTCDate()).padStart(2, '0') + '/' + String(d.getUTCMonth() + 1).padStart(2, '0') + '/' + d.getUTCFullYear(); break; }
+      default: t = fmtGeneral(v);
+    }
+    return { t, cls: 'num' };
+  }
+
+  /* ================= moving formulas: copy, fill, insert and delete ================= */
+  const REF_RE = /(^|[^A-Za-z0-9_$.'!])((?:'(?:[^']|'')+'|[A-Za-z_][\w.]*)!)?(\$?)([A-Za-z]{1,3})(\$?)(\d+)(?![\w(])/g;
+  function mapRefs(f, fn) {
+    // leave text in quotes alone
+    return f.split(/("(?:[^"]|"")*")/).map((part, i) => i % 2 ? part : part.replace(REF_RE, (m, pre, sheet, ac, col, ar, row) => { const out = fn({ sheet: sheet || '', ac: !!ac, c: colIndex(col), ar: !!ar, r: +row - 1 }); return pre + (out == null ? '#REF!' : out); })).join('');
+  }
+  const refStr = (q) => q.sheet + (q.ac ? '$' : '') + colName(q.c) + (q.ar ? '$' : '') + (q.r + 1);
+  function shiftFormula(v, dr, dc) { if (typeof v !== 'string' || v[0] !== '=') return v; return mapRefs(v, q => { if (!q.ar) q.r += dr; if (!q.ac) q.c += dc; if (q.r < 0 || q.c < 0) return null; return refStr(q); }); }
+  // insert/delete rows or columns on this sheet: fix every formula that points at it
+  function remapAll(axis, at, n) {
+    const fix = q => { const k = axis === 'r' ? 'r' : 'c'; if (q[k] >= at) { if (n < 0 && q[k] < at - n) return null; q[k] += n; } return refStr(q); };
+    for (const s of book.sheets) for (const [a, cell] of Object.entries(s.cells)) if (typeof cell.v === 'string' && cell.v[0] === '=') cell.v = mapRefs(cell.v, q => { const target = q.sheet ? sheetByName(q.sheet.slice(0, -1).replace(/^'|'$/g, '').replace(/''/g, "'")) : s; if (target !== sh) return refStr(q); return fix(q); });
+  }
+
+  /* ================= history ================= */
+  const hist = []; let hpos = -1;
+  const snap = () => JSON.stringify({ cells: sh.cells, cw: sh.cw, nr: sh.nr, nc: sh.nc });
+  function record() { const s = snap(); if (hpos >= 0 && hist[hpos].s === s && hist[hpos].id === sh.id) return; hist.length = hpos + 1; hist.push({ id: sh.id, s, sel: Object.assign({}, sel) }); if (hist.length > 150) hist.shift(); hpos = hist.length - 1; syncUndo(); }
+  function restoreHist(e) { const s = book.sheets.find(x => x.id === e.id); if (!s) return; const d = JSON.parse(e.s); Object.assign(s, d); if (sh !== s) { sh = s; book.active = book.sheets.indexOf(s); buildGrid(); renderTabs(); } else if (s.nr !== gridDims.nr || s.nc !== gridDims.nc) buildGrid(); sel = Object.assign({}, e.sel); recalc(); }
+  function undo() { commitEdit(); if (hpos <= 0) return toast('Nothing to undo'); hpos--; restoreHist(hist[hpos]); toast('Undo'); syncUndo(); }
+  function redo() { if (hpos >= hist.length - 1) return toast('Nothing to redo'); hpos++; restoreHist(hist[hpos]); toast('Redo'); syncUndo(); }
+  const syncUndo = () => { $('#undoBtn').disabled = hpos <= 0; $('#redoBtn').disabled = hpos >= hist.length - 1; };
+  $('#undoBtn').addEventListener('click', undo); $('#redoBtn').addEventListener('click', redo);
+  function change() { record(); recalc(); saveSoon(); }
+
+  /* ================= grid ================= */
+  const G = $('#grid'), wrap = $('#gridWrap'), inner = $('#gridInner');
+  let gridDims = { nr: 0, nc: 0 }, tds = [];
+  const CW = 96;
+  function buildGrid() {
+    const nr = sh.nr, nc = sh.nc; gridDims = { nr, nc };
+    let html = '<colgroup><col style="width:46px">'; for (let c = 0; c < nc; c++) html += '<col style="width:' + (sh.cw[c] || CW) + 'px">'; html += '</colgroup><thead><tr><th class="corner" data-all="1"></th>';
+    for (let c = 0; c < nc; c++) html += '<th data-col="' + c + '" style="position:sticky">' + colName(c) + '<span class="rz" data-rz="' + c + '"></span></th>';
+    html += '</tr></thead><tbody>';
+    for (let r = 0; r < nr; r++) { html += '<tr><th data-row="' + r + '">' + (r + 1) + '</th>'; for (let c = 0; c < nc; c++) html += '<td data-r="' + r + '" data-c="' + c + '"></td>'; html += '</tr>'; }
+    G.innerHTML = html + '</tbody>'; sizeTable();
+    tds = []; G.querySelectorAll('tbody tr').forEach(tr => tds.push([...tr.querySelectorAll('td')]));
+  }
+  function sizeTable() { let w = 46; for (let c = 0; c < sh.nc; c++) w += sh.cw[c] || CW; G.style.width = w + 'px'; }
+  function paintCells() {
+    for (let r = 0; r < gridDims.nr; r++) for (let c = 0; c < gridDims.nc; c++) {
+      const td = tds[r][c], cell = sh.cells[addr(r, c)];
+      if (!cell) { if (td.textContent || td.className || td.getAttribute('style')) { td.textContent = ''; td.className = ''; td.removeAttribute('style'); } continue; }
+      const v = valueOf(sh, r, c), st = cell.s || {}, d = display(v, st);
+      td.textContent = d.t; td.className = d.cls;
+      let css = ''; if (st.b) css += 'font-weight:700;'; if (st.i) css += 'font-style:italic;'; if (st.u) css += 'text-decoration:underline;'; if (st.c) css += 'color:' + st.c + ';'; if (st.bg) css += 'background:' + st.bg + ';'; if (st.al) css += 'text-align:' + st.al + ';'; if (st.fs) css += 'font-size:' + st.fs + 'px;';
+      td.style.cssText = css;
+    }
+  }
+  function recalc() { memo = new Map(); visiting = new Set(); paintCells(); placeSel(); syncBar(); stats(); }
+
+  /* ================= selection ================= */
+  let sel = { r0: 0, c0: 0, r1: 0, c1: 0, ar: 0, ac: 0 };
+  const norm = s => ({ r0: Math.min(s.r0, s.r1), r1: Math.max(s.r0, s.r1), c0: Math.min(s.c0, s.c1), c1: Math.max(s.c0, s.c1) });
+  const selAddr = () => { const n = norm(sel); return n.r0 === n.r1 && n.c0 === n.c1 ? addr(n.r0, n.c0) : addr(n.r0, n.c0) + ':' + addr(n.r1, n.c1); };
+  function rectOf(n) { const a = tds[n.r0] && tds[n.r0][n.c0], b = tds[n.r1] && tds[n.r1][n.c1]; if (!a || !b) return null; return { x: a.offsetLeft, y: a.offsetTop, w: b.offsetLeft + b.offsetWidth - a.offsetLeft, h: b.offsetTop + b.offsetHeight - a.offsetTop }; }
+  function placeSel() {
+    const n = norm(sel), R = rectOf(n), box = $('#selBox'); if (!R) return;
+    Object.assign(box.style, { left: R.x - 1 + 'px', top: R.y - 1 + 'px', width: R.w + 1 + 'px', height: R.h + 1 + 'px' });
+    G.querySelectorAll('th.hl').forEach(t => t.classList.remove('hl'));
+    for (let c = n.c0; c <= n.c1; c++) { const t = G.querySelector('th[data-col="' + c + '"]'); if (t) t.classList.add('hl'); }
+    for (let r = n.r0; r <= n.r1; r++) { const t = G.querySelector('th[data-row="' + r + '"]'); if (t) t.classList.add('hl'); }
+  }
+  function select(r0, c0, r1, c1, keepAnchor) { r0 = clamp(r0, 0, sh.nr - 1); c0 = clamp(c0, 0, sh.nc - 1); r1 = clamp(r1 == null ? r0 : r1, 0, sh.nr - 1); c1 = clamp(c1 == null ? c0 : c1, 0, sh.nc - 1); sel = { r0, c0, r1, c1, ar: keepAnchor ? sel.ar : r0, ac: keepAnchor ? sel.ac : c0 }; placeSel(); syncBar(); stats(); syncRibbon(); renderChart(); }
+  function scrollTo(r, c) { const td = tds[r] && tds[r][c]; if (!td) return; const W = wrap, L = td.offsetLeft, T = td.offsetTop; if (L - 46 < W.scrollLeft) W.scrollLeft = L - 46; else if (L + td.offsetWidth > W.scrollLeft + W.clientWidth) W.scrollLeft = L + td.offsetWidth - W.clientWidth; if (T - 27 < W.scrollTop) W.scrollTop = T - 27; else if (T + td.offsetHeight > W.scrollTop + W.clientHeight) W.scrollTop = T + td.offsetHeight - W.clientHeight; }
+  function syncBar() { $('#nameBox').value = selAddr(); if (!editing) { const cell = sh.cells[addr(sel.ar, sel.ac)]; $('#formula').value = cell ? cell.v : ''; } }
+  function stats() { const n = norm(sel), v = []; let count = 0; for (let r = n.r0; r <= n.r1; r++) for (let c = n.c0; c <= n.c1; c++) { const x = valueOf(sh, r, c); if (x != null && x !== '') count++; if (typeof x === 'number') v.push(x); } $('#stat').textContent = v.length > 1 ? 'Sum ' + fmtGeneral(+v.reduce((a, b) => a + b, 0).toPrecision(12)) + ' · Average ' + fmtGeneral(+(v.reduce((a, b) => a + b, 0) / v.length).toPrecision(10)) + ' · Count ' + count : count > 1 ? 'Count ' + count : ''; }
+
+  /* ================= pointer: select, extend, point at cells while writing a formula ================= */
+  let drag = null;
+  const cellFromEvent = e => { const t = document.elementFromPoint(e.clientX, e.clientY); const td = t && t.closest && t.closest('td[data-r]'); return td ? { r: +td.dataset.r, c: +td.dataset.c } : null; };
+  function pointing() { if (!editing) return false; const inp = editing.inp, v = inp.value, i = inp.selectionStart; return v[0] === '=' && /[=(+\-*\/^,&<>:\s]$/.test(v.slice(0, i)); }
+  function insertRef(text) { const inp = editing.inp, i = inp.selectionStart, j = editing.refEnd != null ? editing.refEnd : inp.selectionEnd, st = editing.refStart != null ? editing.refStart : i; inp.value = inp.value.slice(0, st) + text + inp.value.slice(j); editing.refStart = st; editing.refEnd = st + text.length; inp.setSelectionRange(st + text.length, st + text.length); mirror(inp); }
+  let selBefore = null;
+  G.addEventListener('pointerdown', e => {
+    selBefore = norm(sel);
+    const th = e.target.closest('th'), rz = e.target.closest('.rz');
+    if (rz) { e.preventDefault(); const c = +rz.dataset.rz, x0 = e.clientX, w0 = sh.cw[c] || CW, col = G.querySelectorAll('col')[c + 1]; rz.setPointerCapture(e.pointerId); const mv = ev => { const w = clamp(w0 + ev.clientX - x0, 30, 600); col.style.width = w + 'px'; sh.cw[c] = w; sizeTable(); placeSel(); }; const upx = () => { rz.removeEventListener('pointermove', mv); rz.removeEventListener('pointerup', upx); change(); }; rz.addEventListener('pointermove', mv); rz.addEventListener('pointerup', upx); return; }
+    if (th) { commitEdit(); if (th.dataset.all) select(0, 0, sh.nr - 1, sh.nc - 1); else if (th.dataset.col != null) { const c = +th.dataset.col; e.shiftKey ? select(sel.r0, sel.c0, sh.nr - 1, c, true) : select(0, c, sh.nr - 1, c); } else if (th.dataset.row != null) { const r = +th.dataset.row; e.shiftKey ? select(sel.r0, sel.c0, r, sh.nc - 1, true) : select(r, 0, r, sh.nc - 1); } return; }
+    const p = cellFromEvent(e); if (!p) return;
+    if (editing && pointing() || editing && editing.refStart != null && editing.inp.value[0] === '=' && editing.inp.selectionStart === editing.refEnd) {
+      e.preventDefault(); editing.refStart = editing.refStart != null && editing.inp.selectionStart === editing.refEnd ? editing.refStart : null; editing.refEnd = null;
+      if (editing.refStart == null) { editing.refStart = editing.inp.selectionStart; editing.refEnd = editing.inp.selectionEnd; }
+      const a = p; insertRef(addr(a.r, a.c)); showRefBox(a, a);
+      drag = { mode: 'ref', a, id: e.pointerId }; G.setPointerCapture(e.pointerId); return;
+    }
+    commitEdit();
+    if (e.shiftKey) select(sel.ar, sel.ac, p.r, p.c, true); else select(p.r, p.c);
+    if (e.pointerType !== 'touch') { drag = { mode: 'sel', id: e.pointerId }; G.setPointerCapture(e.pointerId); }
+  });
+  G.addEventListener('pointermove', e => { if (!drag || drag.id !== e.pointerId) return; const p = cellFromEvent(e); if (!p) return; if (drag.mode === 'sel') { select(sel.ar, sel.ac, p.r, p.c, true); sel.r0 = sel.ar; sel.c0 = sel.ac; } else if (drag.mode === 'ref') { const n = norm({ r0: drag.a.r, c0: drag.a.c, r1: p.r, c1: p.c }); insertRef(n.r0 === n.r1 && n.c0 === n.c1 ? addr(n.r0, n.c0) : addr(n.r0, n.c0) + ':' + addr(n.r1, n.c1)); showRefBox({ r: n.r0, c: n.c0 }, { r: n.r1, c: n.c1 }); } });
+  G.addEventListener('pointerup', () => { if (drag && drag.mode === 'ref' && editing) editing.inp.focus(); drag = null; });
+  function showRefBox(a, b) { const R = rectOf(norm({ r0: a.r, c0: a.c, r1: b.r, c1: b.c })), box = $('#refBox'); if (!R) return; Object.assign(box.style, { display: 'block', left: R.x + 'px', top: R.y + 'px', width: R.w + 'px', height: R.h + 'px' }); }
+  G.addEventListener('dblclick', e => { const p = cellFromEvent(e); if (p) startEdit(null, true); });
+  // the round knob on the selection: drag to select more (works with a finger)
+  { const k = $('#selBox .knob'); k.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); k.setPointerCapture(e.pointerId); const n = norm(sel), anchor = { r: n.r0, c: n.c0 }; const mv = ev => { const p = cellFromEvent(ev); if (p) { sel = { r0: anchor.r, c0: anchor.c, r1: Math.max(anchor.r, p.r), c1: Math.max(anchor.c, p.c), ar: anchor.r, ac: anchor.c }; placeSel(); stats(); $('#nameBox').value = selAddr(); } }; const upx = () => { k.removeEventListener('pointermove', mv); k.removeEventListener('pointerup', upx); renderChart(); }; k.addEventListener('pointermove', mv); k.addEventListener('pointerup', upx); }); }
+  /* ---------- touch: hold and drag to select a block; hold inside the selection and drag to move it ---------- */
+  const inSel = (p, n) => { n = n || norm(sel); return p.r >= n.r0 && p.r <= n.r1 && p.c >= n.c0 && p.c <= n.c1; };
+  let lp = null;
+  wrap.addEventListener('touchstart', e => {
+    hideActs();
+    if (e.touches.length !== 1 || editing) { if (lp) { clearTimeout(lp.timer); lp = null; } return; }
+    const t = e.touches[0], el = document.elementFromPoint(t.clientX, t.clientY), td = el && el.closest && el.closest('td[data-r]'); if (!td) return;
+    // touch events can arrive after the pointer has already re-selected the cell, so judge by the selection before
+    const before = selBefore || norm(sel), p = { r: +td.dataset.r, c: +td.dataset.c }, wasIn = (before.r1 > before.r0 || before.c1 > before.c0) && inSel(p, before);
+    lp = { x: t.clientX, y: t.clientY, p, mode: null, wasIn, t0: Date.now() };
+    lp.timer = setTimeout(() => { if (!lp) return; lp.mode = lp.wasIn ? 'move' : 'select'; if (lp.mode === 'select') select(p.r, p.c); else { if (selBefore) select(selBefore.r0, selBefore.c0, selBefore.r1, selBefore.c1); startMove(p); } $('#selBox').classList.add('lift'); }, 380);
+  }, { passive: true });
+  wrap.addEventListener('touchmove', e => {
+    if (!lp) return; const t = e.touches[0];
+    if (!lp.mode) { if (Math.hypot(t.clientX - lp.x, t.clientY - lp.y) > 10) { clearTimeout(lp.timer); lp = null; } return; }
+    e.preventDefault(); autoScroll(t.clientX, t.clientY);
+    const p = cellFromEvent(t); if (!p) return;
+    if (lp.mode === 'select') { select(lp.p.r, lp.p.c, p.r, p.c, true); } else moveTo(p);
+  }, { passive: false });
+  wrap.addEventListener('touchend', e => {
+    if (!lp) return; const L = lp; lp = null; clearTimeout(L.timer); $('#selBox').classList.remove('lift'); stopScroll();
+    if (L.mode === 'move') { e.preventDefault(); endMove(true); return; }
+    if (L.mode === 'select') { e.preventDefault(); renderChart(); showActs(); return; }
+    // a quick tap on a cell that was already selected: show what you can do with it
+    if (L.wasIn && Date.now() - L.t0 < 350) setTimeout(() => { if (!editing) showActs(); }, 30);
+  });
+  wrap.addEventListener('touchcancel', () => { if (lp) { clearTimeout(lp.timer); if (lp.mode === 'move') endMove(false); lp = null; $('#selBox').classList.remove('lift'); stopScroll(); } });
+  // keep the grid scrolling while a finger drags near its edge
+  let scT = 0, scV = [0, 0];
+  function autoScroll(x, y) { const r = wrap.getBoundingClientRect(), m = 40; scV = [x < r.left + m + 46 ? -12 : x > r.right - m ? 12 : 0, y < r.top + m + 26 ? -12 : y > r.bottom - m ? 12 : 0]; if ((scV[0] || scV[1]) && !scT) scT = setInterval(() => { wrap.scrollLeft += scV[0]; wrap.scrollTop += scV[1]; }, 30); else if (!scV[0] && !scV[1]) stopScroll(); }
+  function stopScroll() { clearInterval(scT); scT = 0; }
+  /* ---------- moving a block of cells (drag its edge with a mouse, or hold and drag with a finger) ---------- */
+  let mv = null;
+  function startMove(p) { const n = norm(sel); mv = { n, grab: { r: p.r - n.r0, c: p.c - n.c0 }, to: { r: n.r0, c: n.c0 } }; moveTo(p); }
+  function moveTo(p) { if (!mv) return; const n = mv.n, h_ = n.r1 - n.r0, w = n.c1 - n.c0; mv.to = { r: clamp(p.r - mv.grab.r, 0, sh.nr - 1 - h_), c: clamp(p.c - mv.grab.c, 0, sh.nc - 1 - w) }; const R = rectOf({ r0: mv.to.r, c0: mv.to.c, r1: mv.to.r + h_, c1: mv.to.c + w }), g = $('#ghost'); if (R) Object.assign(g.style, { display: 'block', left: R.x - 1 + 'px', top: R.y - 1 + 'px', width: R.w + 1 + 'px', height: R.h + 1 + 'px' }); }
+  function endMove(go) { $('#ghost').style.display = 'none'; const M = mv; mv = null; if (!M || !go) return; const dr = M.to.r - M.n.r0, dc = M.to.c - M.n.c0; if (!dr && !dc) return; moveCells(M.n, dr, dc); }
+  function moveCells(n, dr, dc) {
+    commitEdit();
+    const inside = (r, c) => r >= n.r0 && r <= n.r1 && c >= n.c0 && c <= n.c1;
+    // formulas anywhere that point into the moved block now point at its new place
+    // a range moves only when the whole of it is inside the block; single references move when they're inside
+    const RNG = /((?:'(?:[^']|'')+'|[A-Za-z_][\w.]*)!)?(\$?[A-Za-z]{1,3}\$?\d+):(\$?[A-Za-z]{1,3}\$?\d+)/g;
+    for (const s2 of book.sheets) for (const cell of Object.values(s2.cells)) if (typeof cell.v === 'string' && cell.v[0] === '=') {
+      const tgt = sp => sp ? sheetByName(sp.slice(0, -1).replace(/^'|'$/g, '').replace(/''/g, "'")) : s2;
+      const parts = cell.v.split(/("(?:[^"]|"")*")/);
+      cell.v = parts.map((part, i) => {
+        if (i % 2) return part;
+        const keep = [];
+        part = part.replace(RNG, (m, sp, a1, b1) => {
+          const A = parseAddr(a1), B = parseAddr(b1), on = tgt(sp) === sh && A && B && inside(A.r, A.c) && inside(B.r, B.c);
+          const out = on ? (sp || '') + mapRefs(a1, q => { q.r += dr; q.c += dc; return refStr(q); }) + ':' + mapRefs(b1, q => { q.r += dr; q.c += dc; return refStr(q); }) : m;
+          keep.push(out); return '\u0001' + (keep.length - 1) + '\u0001';
+        });
+        part = mapRefs(part, q => { const target = tgt(q.sheet); if (target === sh && inside(q.r, q.c)) { q.r += dr; q.c += dc; } return refStr(q); });
+        return part.replace(/\u0001(\d+)\u0001/g, (m, k) => keep[+k]);
+      }).join('');
+    }
+    const moving = []; for (let r = n.r0; r <= n.r1; r++) for (let c = n.c0; c <= n.c1; c++) { const a = addr(r, c); moving.push([r, c, sh.cells[a]]); delete sh.cells[a]; }
+    for (const [r, c, cell] of moving) { const a = addr(r + dr, c + dc); if (cell) sh.cells[a] = cell; else delete sh.cells[a]; }
+    select(n.r0 + dr, n.c0 + dc, n.r1 + dr, n.c1 + dc); change(); toast('Moved to ' + selAddr());
+  }
+  document.querySelectorAll('#selBox .edge').forEach(ed => ed.addEventListener('pointerdown', e => {
+    if (e.pointerType === 'touch') return; e.preventDefault(); e.stopPropagation(); commitEdit();
+    const p0 = cellFromEvent(e) || { r: sel.r0, c: sel.c0 }, n = norm(sel); startMove({ r: clamp(p0.r, n.r0, n.r1), c: clamp(p0.c, n.c0, n.c1) }); ed.setPointerCapture(e.pointerId);
+    const mvf = ev => { const p = cellFromEvent(ev); if (p) moveTo(p); autoScroll(ev.clientX, ev.clientY); }, up = () => { ed.removeEventListener('pointermove', mvf); ed.removeEventListener('pointerup', up); stopScroll(); endMove(true); };
+    ed.addEventListener('pointermove', mvf); ed.addEventListener('pointerup', up);
+  }));
+  /* ---------- the action bar over the selection ---------- */
+  function showActs() {
+    const b = $('#actBar'), n = norm(sel), R = rectOf(n); if (!R) return;
+    b.innerHTML = '';
+    const btn = (l, fn) => b.append(h('button', { onmousedown: e => e.preventDefault(), onclick: () => { hideActs(); fn(); } }, l)), sepr = () => b.append(h('i'));
+    btn('Cut', () => copy(true)); btn('Copy', () => copy(false)); if (clip) { btn('Paste', () => paste()); btn('Paste values', () => paste({ values: true })); } btn('Paste from other apps', () => paste({ system: true })); sepr();
+    btn('Clear', () => clearSel(false)); if (n.r1 > n.r0) btn('Fill ↓', () => fill('down')); if (n.c1 > n.c0) btn('Fill →', () => fill('right')); if (n.r1 > n.r0) { btn('Sort ↑', () => sortSel(true)); btn('Sort ↓', () => sortSel(false)); } sepr();
+    btn('Edit', () => startEdit(null, true)); btn('Move…', () => { toast('Hold the selection with a finger, then drag it where you want it (or drag its edge with a mouse).', 3500); });
+    b.style.display = 'flex';
+    const top = R.y - b.offsetHeight - 8 >= wrap.scrollTop + 26 ? R.y - b.offsetHeight - 8 : R.y + R.h + 8;
+    b.style.left = clamp(R.x, wrap.scrollLeft + 50, wrap.scrollLeft + wrap.clientWidth - b.offsetWidth - 6) + 'px'; b.style.top = top + 'px';
+  }
+  function hideActs() { const b = $('#actBar'); if (b) b.style.display = 'none'; }
+  G.addEventListener('contextmenu', e => { const p = cellFromEvent(e); if (!p) return; e.preventDefault(); if (!inSel(p)) select(p.r, p.c); showActs(); });
+  wrap.addEventListener('scroll', hideActs, { passive: true });
+  // double-tap on touch to edit
+  { let last = 0, lastCell = ''; G.addEventListener('pointerup', e => { if (e.pointerType !== 'touch') return; const p = cellFromEvent(e); if (!p) return; const k = p.r + ',' + p.c, now = Date.now(); if (k === lastCell && now - last < 380 && !editing) startEdit(null, true); last = now; lastCell = k; }); }
+  // two-finger tap undo, three-finger tap redo
+  { let T = null; wrap.addEventListener('touchstart', e => { if (!T) T = { t0: Date.now(), max: 0, x: e.touches[0].clientX, y: e.touches[0].clientY, moved: 0 }; T.max = Math.max(T.max, e.touches.length); }, { passive: true });
+    wrap.addEventListener('touchmove', e => { if (T) T.moved += Math.abs(e.touches[0].clientX - T.x) + Math.abs(e.touches[0].clientY - T.y); }, { passive: true });
+    wrap.addEventListener('touchend', e => { if (!T || e.touches.length) return; const t = T; T = null; if (Date.now() - t.t0 < 320 && t.moved < 30) { if (t.max === 2) undo(); else if (t.max === 3) redo(); } }); }
+
+  /* ================= editing ================= */
+  let editing = null;
+  const cellEd = $('#cellEd'), fbar = $('#formula');
+  function startEdit(initial, keep, viaBar) {
+    if (editing) return; const r = sel.ar, c = sel.ac, cell = sh.cells[addr(r, c)], td = tds[r][c]; scrollTo(r, c);
+    const inp = viaBar ? fbar : cellEd;
+    editing = { r, c, inp, orig: cell ? cell.v : '', refStart: null, refEnd: null };
+    const val = initial != null ? initial : keep ? (cell ? String(cell.v) : '') : '';
+    if (!viaBar) { Object.assign(cellEd.style, { display: 'block', left: td.offsetLeft - 1 + 'px', top: td.offsetTop - 1 + 'px', minWidth: td.offsetWidth + 2 + 'px', height: td.offsetHeight + 2 + 'px', textAlign: 'left' }); cellEd.value = val; cellEd.focus(); }
+    else fbar.value = val;
+    inp.setSelectionRange(inp.value.length, inp.value.length); mirror(inp); fnHint();
+  }
+  function mirror(src) { if (src === cellEd) fbar.value = cellEd.value; else cellEd.value = fbar.value; if (editing && editing.inp === cellEd) cellEd.style.width = Math.max(tds[editing.r][editing.c].offsetWidth + 2, cellEd.value.length * 8.4 + 20) + 'px'; }
+  function commitEdit(move) {
+    if (!editing) return; const E2 = editing; editing = null; cellEd.style.display = 'none'; $('#refBox').style.display = 'none'; closeHint();
+    let v = E2.inp.value; if (v === String(E2.orig ?? '')) { if (move) moveSel(move); return; }
+    setCell(E2.r, E2.c, v); change(); if (move) moveSel(move);
+  }
+  function cancelEdit() { if (!editing) return; editing = null; cellEd.style.display = 'none'; $('#refBox').style.display = 'none'; closeHint(); syncBar(); }
+  function setCell(r, c, v) {
+    const a = addr(r, c); let cell = sh.cells[a];
+    if (v == null || v === '') { if (cell) { delete cell.v; if (!cell.s || !Object.keys(cell.s).length) delete sh.cells[a]; } return; }
+    if (typeof v === 'string' && v[0] !== '=') { const d = parseDate(v); if (d != null && /[\/-]/.test(v)) { cell = sh.cells[a] = cell || {}; cell.v = String(d); cell.s = Object.assign(cell.s || {}, { fmt: 'date' }); return; } if (/^[-+]?\d+(\.\d+)?%$/.test(v.trim())) { cell = sh.cells[a] = cell || {}; cell.v = String(parseFloat(v) / 100); cell.s = Object.assign(cell.s || {}, { fmt: 'pct' }); return; } if (/^[£$€]\s?-?[\d,]+(\.\d+)?$/.test(v.trim())) { cell = sh.cells[a] = cell || {}; cell.v = v.replace(/[£$€,\s]/g, ''); cell.s = Object.assign(cell.s || {}, { fmt: v.trim()[0] === '£' ? 'gbp' : v.trim()[0] === '$' ? 'usd' : 'eur' }); return; } }
+    if (typeof v === 'string' && v[0] === '=') v = '=' + v.slice(1).replace(/([A-Za-z_][\w.]*)\s*\(/g, (m, f) => f.toUpperCase() + '(');
+    cell = sh.cells[a] = cell || {}; cell.v = v;
+  }
+  function moveSel([dr, dc]) { const r = clamp(sel.ar + dr, 0, sh.nr - 1), c = clamp(sel.ac + dc, 0, sh.nc - 1); select(r, c); scrollTo(r, c); }
+  for (const inp of [cellEd, fbar]) {
+    inp.addEventListener('input', () => { if (editing) { editing.refStart = editing.refEnd = null; } mirror(inp); fnHint(); });
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); commitEdit(e.shiftKey ? [-1, 0] : [1, 0]); if (inp === fbar) fbar.blur(); }
+      else if (e.key === 'Tab') { e.preventDefault(); commitEdit(e.shiftKey ? [0, -1] : [0, 1]); }
+      else if (e.key === 'Escape') { e.preventDefault(); cancelEdit(); inp.blur(); }
+    });
+  }
+  fbar.addEventListener('focus', () => { if (!editing) startEdit(null, true, true); });
+  cellEd.addEventListener('blur', () => setTimeout(() => { if (editing && editing.inp === cellEd && document.activeElement !== cellEd && !drag) commitEdit(); }, 150));
+  fbar.addEventListener('blur', () => setTimeout(() => { if (editing && editing.inp === fbar && document.activeElement !== fbar && !drag) commitEdit(); }, 150));
+  $('#nameBox').addEventListener('change', e => { const v = e.target.value.trim().toUpperCase(), [a, b] = v.split(':').map(parseAddr); if (a) { select(a.r, a.c, b ? b.r : a.r, b ? b.c : a.c); scrollTo(a.r, a.c); } else syncBar(); });
+  addEventListener('keydown', e => {
+    if (editing || e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.isContentEditable) return;
+    const k = e.key, meta = e.metaKey || e.ctrlKey;
+    if (meta && k.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
+    if (meta && k.toLowerCase() === 'y') { e.preventDefault(); redo(); return; }
+    if (meta && k.toLowerCase() === 'c') { e.preventDefault(); copy(false); return; } if (meta && k.toLowerCase() === 'x') { e.preventDefault(); copy(true); return; } if (meta && k.toLowerCase() === 'v') { e.preventDefault(); paste(); return; }
+    if (meta && k.toLowerCase() === 'b') { e.preventDefault(); styleSel('b', 'toggle'); return; } if (meta && k.toLowerCase() === 'i') { e.preventDefault(); styleSel('i', 'toggle'); return; }
+    if (meta && k.toLowerCase() === 'a') { e.preventDefault(); select(0, 0, sh.nr - 1, sh.nc - 1); return; }
+    const arrows = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] };
+    if (arrows[k]) { e.preventDefault(); const [dr, dc] = arrows[k]; if (e.shiftKey) { select(sel.ar, sel.ac, clamp(sel.r1 + dr, 0, sh.nr - 1), clamp(sel.c1 + dc, 0, sh.nc - 1), true); scrollTo(sel.r1, sel.c1); } else moveSel([dr, dc]); return; }
+    if (k === 'Enter') { e.preventDefault(); startEdit(null, true); return; } if (k === 'Tab') { e.preventDefault(); moveSel([0, e.shiftKey ? -1 : 1]); return; }
+    if (k === 'Delete' || k === 'Backspace') { e.preventDefault(); clearSel(false); return; }
+    if (k.length === 1 && !meta && !e.altKey) { e.preventDefault(); startEdit(k); }
+  });
+
+  /* ---------- function hints while typing a formula ---------- */
+  let hint = null; const closeHint = () => { if (hint) { hint.remove(); hint = null; } };
+  function fnHint() {
+    closeHint(); if (!editing) return; const v = editing.inp.value, i = editing.inp.selectionStart, m = /([A-Za-z][\w.]*)$/.exec(v.slice(0, i)); if (v[0] !== '=' || !m || m[1].length < 1) return;
+    const q = m[1].toUpperCase(), list = Object.keys(FN).filter(f => f.startsWith(q)).slice(0, 7); if (!list.length) return;
+    hint = h('div', { class: 'pop', style: 'padding:4px' }, list.map(f => { const help = FNHELP.find(x => x[0] === f); return h('button', { class: 'mi', onmousedown: e => e.preventDefault(), onclick: () => { const inp = editing.inp, s = inp.selectionStart, st = s - m[1].length; inp.value = inp.value.slice(0, st) + f + '(' + inp.value.slice(s); inp.setSelectionRange(st + f.length + 1, st + f.length + 1); mirror(inp); closeHint(); inp.focus(); } }, h('code', {}, f), help ? h('small', {}, help[1]) : null); }));
+    document.body.append(hint); const r = editing.inp.getBoundingClientRect(); hint.style.left = Math.min(r.left, innerWidth - 340) + 'px'; hint.style.top = (r.bottom + 4) + 'px';
+  }
+
+  /* ================= operations ================= */
+  const forSel = fn => { const n = norm(sel); for (let r = n.r0; r <= n.r1; r++) for (let c = n.c0; c <= n.c1; c++) fn(r, c); };
+  function styleSel(k, v) {
+    commitEdit(); let val = v;
+    if (v === 'toggle') { const cell = sh.cells[addr(sel.ar, sel.ac)]; val = !(cell && cell.s && cell.s[k]); }
+    forSel((r, c) => { const a = addr(r, c), cell = sh.cells[a] || (sh.cells[a] = {}); cell.s = cell.s || {}; if (val == null || val === false || val === '') delete cell.s[k]; else cell.s[k] = val; if (!Object.keys(cell.s).length) delete cell.s; if (cell.v == null && !cell.s) delete sh.cells[a]; });
+    change(); syncRibbon();
+  }
+  function clearSel(formats) { commitEdit(); forSel((r, c) => { const a = addr(r, c), cell = sh.cells[a]; if (!cell) return; if (formats) delete sh.cells[a]; else { delete cell.v; if (!cell.s) delete sh.cells[a]; } }); change(); }
+  let clip = null;
+  function copy(cut) {
+    const n = norm(sel), rows = []; for (let r = n.r0; r <= n.r1; r++) { const row = []; for (let c = n.c0; c <= n.c1; c++) { const cell = sh.cells[addr(r, c)]; row.push(cell ? JSON.parse(JSON.stringify(cell)) : null); } rows.push(row); }
+    const tsv = rows.map((row, i) => row.map((cell, j) => { const v = valueOf(sh, n.r0 + i, n.c0 + j); return display(v, cell && cell.s).t; }).join('\t')).join('\n');
+    const vals = rows.map((row, i) => row.map((cell, j) => { const v = valueOf(sh, n.r0 + i, n.c0 + j); return v == null || isErr(v) ? null : typeof v === 'number' ? +v.toPrecision(15) : v; }));
+    clip = { rows, vals, r: n.r0, c: n.c0, tsv, cut, sheet: sh.id };
+    // show what was copied with a dashed box until it's pasted
+    { const R = rectOf(n), g = $('#ghost'); if (R && cut) Object.assign(g.style, { display: 'block', left: R.x - 1 + 'px', top: R.y - 1 + 'px', width: R.w + 1 + 'px', height: R.h + 1 + 'px' }); }
+    try { navigator.clipboard && navigator.clipboard.writeText(tsv).catch(() => { }); } catch (e) { }
+    toast((cut ? 'Cut ' : 'Copied ') + selAddr() + ': select where it should go, then Paste');
+  }
+  async function paste(opt) {
+    opt = opt || {}; commitEdit(); hideActs();
+    let text = null;
+    // only ask the system clipboard when there's nothing copied here (iPad shows a Paste prompt for it)
+    if (opt.system || !clip) { try { text = navigator.clipboard && navigator.clipboard.readText ? await navigator.clipboard.readText() : null; } catch (e) { if (opt.system) toast('The clipboard wasn’t available: try again and tap Paste when iPad asks.', 3500); } }
+    const n = norm(sel), r0 = n.r0, c0 = n.c0;
+    if (clip && !(opt.system && text && text !== clip.tsv)) {
+      const H = clip.rows.length, Wd = clip.rows[0].length;
+      // a bigger selection that fits whole copies gets the block repeated across it
+      const reps = [(n.r1 - n.r0 + 1) % H === 0 ? (n.r1 - n.r0 + 1) / H : 1, (n.c1 - n.c0 + 1) % Wd === 0 ? (n.c1 - n.c0 + 1) / Wd : 1];
+      if (clip.cut) { const src = book.sheets.find(x => x.id === clip.sheet) || sh; for (let i = 0; i < H; i++) for (let j = 0; j < Wd; j++) delete src.cells[addr(clip.r + i, clip.c + j)]; }
+      for (let R2 = 0; R2 < reps[0]; R2++) for (let C2 = 0; C2 < reps[1]; C2++) clip.rows.forEach((row, i) => row.forEach((cell, j) => {
+        const r = r0 + R2 * H + i, c = c0 + C2 * Wd + j, a = addr(r, c); if (r >= sh.nr || c >= sh.nc) return;
+        if (!cell) { delete sh.cells[a]; return; }
+        const nc = JSON.parse(JSON.stringify(cell));
+        if (opt.values) { nc.v = clip.vals[i][j] == null ? '' : String(clip.vals[i][j]); if (nc.v === '') delete nc.v; }
+        else if (nc.v != null) nc.v = shiftFormula(nc.v, r - clip.r - i, c - clip.c - j);
+        if (nc.v == null && !nc.s) delete sh.cells[a]; else sh.cells[a] = nc;
+      }));
+      select(r0, c0, Math.min(sh.nr - 1, r0 + H * reps[0] - 1), Math.min(sh.nc - 1, c0 + Wd * reps[1] - 1));
+      if (clip.cut) { clip = null; $('#ghost').style.display = 'none'; }
+    } else if (text) { const rows = text.replace(/\r/g, '').replace(/\n$/, '').split('\n').map(l => l.split(l.includes('\t') ? '\t' : ',')); rows.forEach((row, i) => row.forEach((v, j) => { if (r0 + i < sh.nr && c0 + j < sh.nc) setCell(r0 + i, c0 + j, v); })); select(r0, c0, r0 + rows.length - 1, c0 + rows[0].length - 1); }
+    else return toast('Nothing to paste');
+    change();
+  }
+  function fill(dir) {
+    commitEdit(); const n = norm(sel);
+    if (dir === 'down') { if (n.r1 === n.r0) return toast('Select the cells to fill, starting with the one to copy.'); for (let c = n.c0; c <= n.c1; c++) { const a = sh.cells[addr(n.r0, c)], b = sh.cells[addr(n.r0 + 1, c)], va = a && literal(a.v), vb = b && literal(b.v); const series = typeof va === 'number' && typeof vb === 'number' && !(a.v + '').startsWith('=') && n.r1 > n.r0 + 1; for (let r = n.r0 + 1; r <= n.r1; r++) { if (series) { if (r === n.r0 + 1) continue; sh.cells[addr(r, c)] = { v: String(+(va + (vb - va) * (r - n.r0)).toPrecision(12)), s: a.s ? Object.assign({}, a.s) : undefined }; } else if (a) sh.cells[addr(r, c)] = { v: shiftFormula(a.v, r - n.r0, 0), s: a.s ? Object.assign({}, a.s) : undefined }; else delete sh.cells[addr(r, c)]; } } }
+    else { if (n.c1 === n.c0) return toast('Select the cells to fill, starting with the one to copy.'); for (let r = n.r0; r <= n.r1; r++) { const a = sh.cells[addr(r, n.c0)]; for (let c = n.c0 + 1; c <= n.c1; c++) { if (a) sh.cells[addr(r, c)] = { v: shiftFormula(a.v, 0, c - n.c0), s: a.s ? Object.assign({}, a.s) : undefined }; else delete sh.cells[addr(r, c)]; } } }
+    change();
+  }
+  function moveBlock(axis, at, n) {
+    const out = {}; for (const [a, cell] of Object.entries(sh.cells)) { const p = parseAddr(a), k = axis === 'r' ? p.r : p.c; if (k >= at) { if (n < 0 && k < at - n) continue; if (axis === 'r') p.r += n; else p.c += n; } out[addr(p.r, p.c)] = cell; }
+    sh.cells = out;
+  }
+  function insertRow(below) { commitEdit(); const n = norm(sel), at = below ? n.r1 + 1 : n.r0, k = n.r1 - n.r0 + 1; remapAll('r', at, k); moveBlock('r', at, k); sh.nr += k; buildGrid(); change(); }
+  function insertCol(right) { commitEdit(); const n = norm(sel), at = right ? n.c1 + 1 : n.c0, k = n.c1 - n.c0 + 1; remapAll('c', at, k); moveBlock('c', at, k); const cw = {}; for (const [c, w] of Object.entries(sh.cw)) cw[+c >= at ? +c + k : c] = w; sh.cw = cw; sh.nc += k; buildGrid(); change(); }
+  function deleteRows() { commitEdit(); const n = norm(sel), k = n.r1 - n.r0 + 1; if (k >= sh.nr) return; remapAll('r', n.r1 + 1, -k); moveBlock('r', n.r1 + 1, -k); for (const a of Object.keys(sh.cells)) { const p = parseAddr(a); if (p.r >= sh.nr - k) delete sh.cells[a]; } buildGrid(); select(n.r0, n.c0); change(); }
+  function deleteCols() { commitEdit(); const n = norm(sel), k = n.c1 - n.c0 + 1; if (k >= sh.nc) return; remapAll('c', n.c1 + 1, -k); moveBlock('c', n.c1 + 1, -k); for (const a of Object.keys(sh.cells)) { const p = parseAddr(a); if (p.c >= sh.nc - k) delete sh.cells[a]; } buildGrid(); select(n.r0, n.c0); change(); }
+  function sortSel(asc) {
+    commitEdit(); let n = norm(sel); if (n.r0 === n.r1) return toast('Select the rows to sort.');
+    const headerFirst = typeof valueOf(sh, n.r0, sel.ac) === 'string' && typeof valueOf(sh, n.r0 + 1, sel.ac) === 'number';
+    const start = headerFirst ? n.r0 + 1 : n.r0, key = sel.ac, rows = [];
+    for (let r = start; r <= n.r1; r++) { const row = []; for (let c = n.c0; c <= n.c1; c++) row.push(sh.cells[addr(r, c)]); rows.push({ k: valueOf(sh, r, key), row, r }); }
+    rows.sort((a, b) => { const x = a.k, y = b.k; if (x == null) return 1; if (y == null) return -1; if (typeof x === typeof y) return (x < y ? -1 : x > y ? 1 : 0) * (asc ? 1 : -1); return (typeof x === 'number' ? -1 : 1) * (asc ? 1 : -1); });
+    rows.forEach((o, i) => o.row.forEach((cell, j) => { const a = addr(start + i, n.c0 + j); if (cell) { const nc = JSON.parse(JSON.stringify(cell)); nc.v = shiftFormula(nc.v, start + i - o.r, 0); sh.cells[a] = nc; } else delete sh.cells[a]; }));
+    change(); toast('Sorted by column ' + colName(key) + (headerFirst ? ' (kept the heading row)' : ''));
+  }
+  function autoSum() {
+    commitEdit(); const r = sel.ar, c = sel.ac; let r0 = r - 1; while (r0 >= 0 && typeof valueOf(sh, r0, c) === 'number') r0--;
+    if (r0 < r - 1) { setCell(r, c, '=SUM(' + addr(r0 + 1, c) + ':' + addr(r - 1, c) + ')'); change(); return; }
+    let c0 = c - 1; while (c0 >= 0 && typeof valueOf(sh, r, c0) === 'number') c0--;
+    if (c0 < c - 1) { setCell(r, c, '=SUM(' + addr(r, c0 + 1) + ':' + addr(r, c - 1) + ')'); change(); return; }
+    startEdit('=SUM(');
+  }
+
+  /* ================= ribbon ================= */
+  const COLOURS = ['#1c1c20', '#5a5e6b', '#9a9cab', '#ffffff', '#c62828', '#e8473c', '#f08a24', '#d4a017', '#2e8b3e', '#1f9d8b', '#2f7df6', '#4b4bd6', '#7b4fc8', '#c2408f', '#6b3b1f', '#0b4f6c'];
+  const FILLS = ['', '#fff3a0', '#ffe0b2', '#ffcdd2', '#d4f5c9', '#c9ecf7', '#ddd6ff', '#eef0f4', '#d0d4dc', '#1c1c20', '#2f7df6', '#2e8b3e'];
+  const ic = d => '<svg viewBox="0 0 24 24">' + d + '</svg>';
+  const tb = (title, html, fn, id) => { const b = h('button', { class: 'tb', title, id: id || null, onmousedown: e => e.preventDefault(), onclick: fn }); b.innerHTML = html; return b; };
+  function swatchBtn(title, label, list, key) { const b = h('button', { class: 'tb sw', title, onmousedown: e => e.preventDefault() }, label, h('i', { style: 'background:' + (key === 'c' ? '#c62828' : '#fff3a0') })); b.addEventListener('click', () => popAt(b, h('div', {}, h('div', { class: 'swatches' }, list.map(c => h('i', { style: 'background:' + (c || 'repeating-linear-gradient(45deg,#fff 0 4px,#ccc 4px 8px)'), title: c || 'None', onclick: () => { closePop(); if (c) b.querySelector('i').style.background = c; styleSel(key, c || null); } }))), h('div', { class: 'row', style: 'margin-top:8px' }, h('span', { class: 'small' }, 'Custom'), h('input', { type: 'color', onchange: e => { closePop(); styleSel(key, e.target.value); } }))))); return b; }
+  function buildRibbon() {
+    const R = $('#ribbon'); R.innerHTML = '';
+    R.append(tb('Bold', '<b>B</b>', () => styleSel('b', 'toggle'), 'bBtn'), tb('Italic', '<i style="font-family:Georgia">I</i>', () => styleSel('i', 'toggle'), 'iBtn'), tb('Underline', '<u>U</u>', () => styleSel('u', 'toggle'), 'uBtn'),
+      swatchBtn('Text colour', 'A', COLOURS, 'c'), swatchBtn('Fill colour', '🪣', FILLS, 'bg'), h('span', { class: 'sep' }),
+      tb('Align left', ic('<path d="M4 6h16M4 10h10M4 14h16M4 18h10"/>'), () => styleSel('al', 'left')), tb('Centre', ic('<path d="M4 6h16M7 10h10M4 14h16M7 18h10"/>'), () => styleSel('al', 'center')), tb('Align right', ic('<path d="M4 6h16M10 10h10M4 14h16M10 18h10"/>'), () => styleSel('al', 'right')), h('span', { class: 'sep' }),
+      h('select', { id: 'fmtSel', title: 'Number format', onchange: e => styleSel('fmt', e.target.value === 'gen' ? null : e.target.value) }, [['gen', 'General'], ['num', 'Number 0.00'], ['thou', 'Thousands 1,234'], ['pct', 'Percent %'], ['gbp', 'Pounds £'], ['usd', 'Dollars $'], ['eur', 'Euros €'], ['sci', 'Scientific'], ['date', 'Date']].map(([v, l]) => h('option', { value: v }, l))),
+      tb('Fewer decimal places', '.0←', () => dpStep(-1)), tb('More decimal places', '.00→', () => dpStep(1)),
+      h('select', { id: 'fsSel', title: 'Text size', onchange: e => styleSel('fs', e.target.value ? +e.target.value : null) }, [['', 'Size'], ...[10, 11, 12, 14, 16, 18, 22, 28].map(s => [s, s])].map(([v, l]) => h('option', { value: v }, l))), h('span', { class: 'sep' }),
+      tb('Sum (Σ)', 'Σ', autoSum), tb('Functions', '<i style="font-family:Georgia">fx</i>', e => fnMenu(e.currentTarget)), h('span', { class: 'sep' }),
+      tb('Insert rows above', '＋Row↑', () => insertRow(false)), tb('Insert rows below', '＋Row↓', () => insertRow(true)), tb('Insert columns left', '＋Col←', () => insertCol(false)), tb('Insert columns right', '＋Col→', () => insertCol(true)), tb('Delete rows', '−Row', deleteRows), tb('Delete columns', '−Col', deleteCols), h('span', { class: 'sep' }),
+      tb('Sort A→Z / smallest first (by the active column)', '⇅ A→Z', () => sortSel(true)), tb('Sort Z→A / largest first', '⇅ Z→A', () => sortSel(false)), tb('Fill down', '⤓ Fill', () => fill('down')), tb('Fill right', '⤑ Fill', () => fill('right')), h('span', { class: 'sep' }),
+      tb('Copy', '⧉', () => copy(false)), tb('Cut', '✂', () => copy(true)), tb('Paste', '📋', () => paste()), tb('Paste values only (no formulas)', '📋 Values', () => paste({ values: true })), tb('Clear contents', '⌫', () => clearSel(false)), tb('Clear formats too', '⌫ All', () => clearSel(true)));
+  }
+  function dpStep(d) { const cell = sh.cells[addr(sel.ar, sel.ac)], st = (cell && cell.s) || {}; const cur = st.dp != null ? st.dp : st.fmt === 'pct' ? 1 : st.fmt === 'thou' ? 0 : 2; if (!st.fmt) styleSel('fmt', 'num'); styleSel('dp', clamp(cur + d, 0, 10)); }
+  function syncRibbon() { const cell = sh.cells[addr(sel.ar, sel.ac)], st = (cell && cell.s) || {}; for (const [id, k] of [['bBtn', 'b'], ['iBtn', 'i'], ['uBtn', 'u']]) $('#' + id).classList.toggle('on', !!st[k]); $('#fmtSel').value = st.fmt || 'gen'; $('#fsSel').value = st.fs || ''; }
+  function fnMenu(anchor) { const box = h('div', { style: 'width:420px' }, h('div', { class: 'cap' }, 'Tap to start a formula in the selected cell')); for (const [f, d, ex] of FNHELP) box.append(h('button', { class: 'mi', onclick: () => { closePop(); commitEdit(); startEdit('=' + f + '('); } }, h('code', {}, f), h('span', {}, d, h('br'), h('small', {}, '=' + ex)))); popAt(anchor, box); }
+
+  /* ================= popovers & menus ================= */
+  let pop = null; const closePop = () => { if (pop) { pop.remove(); pop = null; } };
+  function popAt(anchor, el) { closePop(); pop = h('div', { class: 'pop' }, el); document.body.append(pop); const r = anchor.getBoundingClientRect(); pop.style.top = (r.bottom + 6) + 'px'; pop.style.left = clamp(r.left, 8, innerWidth - pop.offsetWidth - 8) + 'px'; return pop; }
+  addEventListener('pointerdown', e => { if (pop && !pop.contains(e.target) && !e.target.closest('.tb')) closePop(); }, true);
+  function menu(anchor, items) { const box = h('div', { style: 'min-width:260px' }); for (const it of items) box.append(it === '-' ? h('hr') : typeof it === 'string' ? h('div', { class: 'cap' }, it) : h('button', { class: 'mi', onclick: () => { closePop(); it[1](); } }, it[0])); popAt(anchor, box); }
+  $('#menuBtn').addEventListener('click', e => menu(e.currentTarget, [
+    ...(EMBED ? [] : [['▤ All spreadsheets', openGallery], ['＋ New spreadsheet', async () => { await saveNow(); openBook(newBook()); }], '-']),
+    'Bring in', ['⤒ Import CSV or Excel (.xlsx)…', importFile], 'Save a copy', ['⤓ This sheet as CSV', exportCSV],
+    'Sheet', ['＋ Add rows (100 more)', () => { sh.nr += 100; buildGrid(); change(); }], ['＋ Add columns (10 more)', () => { sh.nc += 10; buildGrid(); change(); }], ['Rename spreadsheet…', () => { const n = prompt('Name', book.name); if (n) { book.name = n.slice(0, 60); $('#bookName').value = book.name; saveSoon(); } }]
+  ]));
+
+  /* ================= sheets (tabs) ================= */
+  function renderTabs() {
+    const T = $('#tabs'); T.innerHTML = '';
+    book.sheets.forEach((s, i) => T.append(h('button', { class: 'tab' + (s === sh ? ' on' : ''), onclick: () => { if (s === sh) return sheetMenu(i); goSheet(i); } }, s.name)));
+    T.append(h('button', { class: 'tab', title: 'Add a sheet', onclick: () => { commitEdit(); book.sheets.push(newSheet('Sheet ' + (book.sheets.length + 1))); goSheet(book.sheets.length - 1); saveSoon(); } }, '＋'), h('span', { id: 'stat' }));
+    stats();
+  }
+  function sheetMenu(i) { const tab = $('#tabs').children[i]; menu(tab, [['Rename…', () => { const n = prompt('Sheet name', book.sheets[i].name); if (n && !book.sheets.some((s, j) => j !== i && s.name.toLowerCase() === n.toLowerCase())) { book.sheets[i].name = n.slice(0, 30); renderTabs(); saveSoon(); } }], ['Duplicate', () => { const c = JSON.parse(JSON.stringify(book.sheets[i])); c.id = 'S' + uid(); c.name += ' copy'; book.sheets.splice(i + 1, 0, c); goSheet(i + 1); saveSoon(); }], ['Delete', () => { if (book.sheets.length < 2) return toast('Keep at least one sheet.'); if (!confirm('Delete “' + book.sheets[i].name + '”?')) return; book.sheets.splice(i, 1); goSheet(Math.max(0, i - 1)); saveSoon(); }]]); }
+  function goSheet(i) { commitEdit(); book.active = i; sh = book.sheets[i]; buildGrid(); select(0, 0); recalc(); renderTabs(); hist.length = 0; hpos = -1; record(); }
+
+  /* ================= import / export ================= */
+  function importFile() {
+    const i = h('input', { type: 'file', accept: '.csv,.tsv,.txt,.xlsx,text/csv', style: 'position:fixed;left:-9999px' });
+    i.addEventListener('change', async () => { const f = i.files[0]; i.remove(); if (!f) return; try {
+      if (/\.xlsx$/i.test(f.name)) { const sheets = await readXLSX(await f.arrayBuffer()); for (const s of sheets) { let name = s.name; while (sheetByName(name)) name += ' (2)'; const S = newSheet(name); S.cells = s.cells; S.nr = Math.max(200, s.nr + 20); S.nc = Math.max(26, s.nc + 2); book.sheets.push(S); } goSheet(book.sheets.length - sheets.length); toast('Imported ' + sheets.length + ' sheet' + (sheets.length > 1 ? 's' : '')); }
+      else { const rows = parseCSV(await f.text()), S = newSheet(f.name.replace(/\.[^.]+$/, '').slice(0, 30)); rows.forEach((row, r) => row.forEach((v, c) => { if (v !== '') S.cells[addr(r, c)] = { v }; })); S.nr = Math.max(200, rows.length + 20); S.nc = Math.max(26, Math.max(...rows.map(r => r.length)) + 2); const empty = !Object.keys(sh.cells).length; if (empty) { const i2 = book.sheets.indexOf(sh); S.name = sh.name === 'Sheet 1' ? S.name : sh.name; book.sheets[i2] = S; goSheet(i2); } else { book.sheets.push(S); goSheet(book.sheets.length - 1); } toast('Imported ' + rows.length + ' rows'); }
+      if (book.name.startsWith('Untitled')) { book.name = f.name.replace(/\.[^.]+$/, '').slice(0, 60); $('#bookName').value = book.name; } saveSoon();
+    } catch (e) { toast('Couldn’t import: ' + e.message, 4000); } });
+    document.body.append(i); i.click();
+  }
+  function parseCSV(t) { const d = t.includes('\t') && !t.split('\n')[0].includes(',') ? '\t' : ','; const rows = []; let row = [], cur = '', q = false; for (let i = 0; i < t.length; i++) { const ch = t[i]; if (q) { if (ch === '"') { if (t[i + 1] === '"') { cur += '"'; i++; } else q = false; } else cur += ch; } else if (ch === '"') q = true; else if (ch === d) { row.push(cur); cur = ''; } else if (ch === '\n') { row.push(cur.replace(/\r$/, '')); rows.push(row); row = []; cur = ''; } else cur += ch; } if (cur !== '' || row.length) { row.push(cur.replace(/\r$/, '')); rows.push(row); } return rows; }
+  async function unzipAll(buf) { const dv = new DataView(buf), u8 = new Uint8Array(buf), out = {}; let e = buf.byteLength - 22; while (e >= 0 && dv.getUint32(e, true) !== 0x06054b50) e--; if (e < 0) throw new Error('not a valid .xlsx'); let p = dv.getUint32(e + 16, true); const n = dv.getUint16(e + 10, true), dec = new TextDecoder(); for (let i = 0; i < n; i++) { const method = dv.getUint16(p + 10, true), cs = dv.getUint32(p + 20, true), nl = dv.getUint16(p + 28, true), xl = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true), lho = dv.getUint32(p + 42, true), name = dec.decode(u8.subarray(p + 46, p + 46 + nl)); if (/^xl\/(sharedStrings|workbook|worksheets\/sheet\d+)\.xml$/.test(name)) out[name] = { method, st: lho + 30 + dv.getUint16(lho + 26, true) + dv.getUint16(lho + 28, true), cs }; p += 46 + nl + xl + cl; } const read = async k => { const q = out[k]; if (!q) return null; const data = u8.slice(q.st, q.st + q.cs); return q.method === 0 ? dec.decode(data) : dec.decode(await new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer()); }; return { names: Object.keys(out), read }; }
+  async function readXLSX(buf) {
+    const z = await unzipAll(buf), P = s => new DOMParser().parseFromString(s, 'application/xml'), byName = (el, n) => [...el.getElementsByTagNameNS('*', n)];
+    const ss = await z.read('xl/sharedStrings.xml'), strings = ss ? byName(P(ss), 'si').map(si => byName(si, 't').map(t => t.textContent).join('')) : [];
+    const wb = P(await z.read('xl/workbook.xml')), names = byName(wb, 'sheet').map(s => s.getAttribute('name'));
+    const out = [];
+    for (let i = 1; i <= Math.min(8, names.length); i++) { const x = await z.read('xl/worksheets/sheet' + i + '.xml'); if (!x) continue; const cells = {}; let nr = 0, nc = 0;
+      for (const c of byName(P(x), 'c')) { const ref = c.getAttribute('r'), t = c.getAttribute('t'), f = byName(c, 'f')[0], v = byName(c, 'v')[0]; let val = f && f.textContent ? '=' + f.textContent : v ? (t === 's' ? strings[+v.textContent] : t === 'b' ? (v.textContent === '1' ? 'TRUE' : 'FALSE') : v.textContent) : t === 'inlineStr' ? byName(c, 't').map(q => q.textContent).join('') : null; if (val == null) continue; cells[ref] = { v: val }; const p = parseAddr(ref); nr = Math.max(nr, p.r + 1); nc = Math.max(nc, p.c + 1); }
+      out.push({ name: (names[i - 1] || 'Sheet ' + i).slice(0, 30), cells, nr, nc }); }
+    return out;
+  }
+  function usedRange(s) { let nr = 0, nc = 0; for (const a of Object.keys(s.cells)) { const p = parseAddr(a); if (s.cells[a].v != null && s.cells[a].v !== '') { nr = Math.max(nr, p.r + 1); nc = Math.max(nc, p.c + 1); } } return { nr, nc }; }
+  const csvCell = v => /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+  function sheetCSV(s, n, raw) { const rows = []; for (let r = n.r0; r <= n.r1; r++) { const row = []; for (let c = n.c0; c <= n.c1; c++) { const v = valueOf(s, r, c), cell = s.cells[addr(r, c)]; row.push(csvCell(raw && typeof v === 'number' ? String(+v.toPrecision(12)) : display(v, cell && cell.s).t)); } rows.push(row.join(',')); } return rows.join('\n'); }
+  function exportCSV() { const u = usedRange(sh); if (!u.nr) return toast('This sheet is empty.'); const a = h('a', { href: URL.createObjectURL(new Blob([sheetCSV(sh, { r0: 0, c0: 0, r1: u.nr - 1, c1: u.nc - 1 })], { type: 'text/csv' })), download: (book.name + ' - ' + sh.name).replace(/[^\w\- ]+/g, '') + '.csv' }); document.body.append(a); a.click(); setTimeout(() => a.remove(), 3000); toast('Saved a CSV'); }
+
+  /* ================= charts ================= */
+  const SERIES = ['#4aa3ff', '#f0ac5f', '#58c472', '#e8473c', '#a99cf2', '#2ce8f5', '#ff77a8', '#ffd75e'];
+  function chartData() {
+    const n = norm(sel), rows = []; for (let r = n.r0; r <= n.r1; r++) { const row = []; for (let c = n.c0; c <= n.c1; c++) row.push(valueOf(sh, r, c)); rows.push(row); }
+    while (rows.length && rows[rows.length - 1].every(v => v == null)) rows.pop(); for (let i = rows.length - 1; i > 0; i--) if (rows[i].every(v => v == null)) rows.splice(i, 1);
+    if (!rows.length || !rows[0].length) return null;
+    const header = rows[0].some(v => typeof v === 'string') && rows.slice(1).some(r => r.some(v => typeof v === 'number'));
+    const body = header ? rows.slice(1) : rows, heads = header ? rows[0].map((v, i) => v == null ? colName(n.c0 + i) : String(v)) : rows[0].map((_, i) => colName(n.c0 + i));
+    const catCol = body.some(r => typeof r[0] === 'string') || rows[0].length > 1 && body.every(r => typeof r[0] === 'number') && sel && rows[0].length > 1 && book.chart.kind !== 'bar' ? 0 : -1;
+    const useCat = body.some(r => typeof r[0] === 'string') || (rows[0].length > 1 && (book.chart.kind === 'scatter' || book.chart.kind === 'line'));
+    const cats = useCat ? body.map(r => r[0]) : body.map((_, i) => i + 1), sCols = useCat ? heads.slice(1).map((hd, i) => i + 1) : heads.map((_, i) => i);
+    const series = sCols.map(ci => ({ name: heads[ci], vals: body.map(r => typeof r[ci] === 'number' ? r[ci] : null) })).filter(s => s.vals.some(v => v != null));
+    return { cats, series, catName: useCat ? heads[0] : '' , header, n };
+  }
+  function drawChart(cv, D, o) {
+    const dpr = window.devicePixelRatio || 1, W = cv.clientWidth || 340, H = cv.clientHeight || 240; cv.width = W * dpr; cv.height = H * dpr; const x = cv.getContext('2d'); x.scale(dpr, dpr); x.clearRect(0, 0, W, H);
+    x.fillStyle = '#9a9cab'; x.font = '12px -apple-system,sans-serif';
+    if (!D || !D.series.length) { x.textAlign = 'center'; x.fillText('Select cells with numbers (headings in the first row)', W / 2, H / 2); return; }
+    const kind = o.kind, top = o.title ? 34 : 14, L = 46, R = 12, B = 36;
+    if (o.title) { x.fillStyle = '#ececf2'; x.font = '600 14px -apple-system,sans-serif'; x.textAlign = 'center'; x.fillText(o.title, W / 2, 20); }
+    if (kind === 'pie' || kind === 'donut') {
+      const s = D.series[0], vals = s.vals.map(v => Math.max(0, v || 0)), tot = vals.reduce((a, b) => a + b, 0) || 1, cx = W * 0.38, cy = (H + top) / 2, r = Math.min(W * 0.3, (H - top) / 2 - 10); let a = -Math.PI / 2;
+      vals.forEach((v, i) => { const da = v / tot * Math.PI * 2; x.beginPath(); x.moveTo(cx, cy); x.arc(cx, cy, r, a, a + da); x.closePath(); x.fillStyle = SERIES[i % SERIES.length]; x.fill(); x.strokeStyle = '#15161a'; x.lineWidth = 2; x.stroke(); a += da; });
+      if (kind === 'donut') { x.beginPath(); x.arc(cx, cy, r * 0.55, 0, 7); x.fillStyle = '#15161a'; x.fill(); }
+      x.font = '12px -apple-system,sans-serif'; x.textAlign = 'left'; D.cats.slice(0, 10).forEach((c, i) => { const y = top + 10 + i * 18; x.fillStyle = SERIES[i % SERIES.length]; x.fillRect(W * 0.7, y - 9, 11, 11); x.fillStyle = '#ececf2'; x.fillText(String(c).slice(0, 16) + ' · ' + Math.round(vals[i] / tot * 100) + '%', W * 0.7 + 16, y); });
+      return;
+    }
+    const all = D.series.flatMap(s => s.vals).filter(v => v != null); let lo = Math.min(0, ...all), hi = Math.max(...all); if (kind === 'scatter' || kind === 'line') lo = Math.min(...all); if (hi === lo) hi = lo + 1; const pad = (hi - lo) * 0.08; if (lo !== 0) lo -= pad; hi += pad;
+    const px = (i, n) => L + (W - L - R) * (kind === 'bar' ? (i + 0.5) / n : n > 1 ? i / (n - 1) : 0.5), py = v => top + (H - top - B) * (1 - (v - lo) / (hi - lo));
+    let xs = D.cats, xNum = kind === 'scatter' && xs.every(v => typeof v === 'number'), xlo = xNum ? Math.min(...xs) : 0, xhi = xNum ? Math.max(...xs) : 1; if (xhi === xlo) xhi = xlo + 1;
+    const pxs = (i, n) => xNum ? L + (W - L - R) * (xs[i] - xlo) / (xhi - xlo) : px(i, n);
+    x.strokeStyle = '#3a3d47'; x.lineWidth = 1; x.fillStyle = '#9a9cab'; x.textAlign = 'right'; x.font = '11px -apple-system,sans-serif';
+    for (let k = 0; k <= 4; k++) { const v = lo + (hi - lo) * k / 4, y = py(v); x.beginPath(); x.moveTo(L, y); x.lineTo(W - R, y); x.stroke(); x.fillText(fmtGeneral(+v.toPrecision(3)), L - 6, y + 4); }
+    x.textAlign = 'center'; const n = xs.length, step = Math.ceil(n / 10); xs.forEach((c, i) => { if (i % step) return; x.fillText(String(c).slice(0, 10), pxs(i, n), H - B + 16); });
+    if (o.xl) x.fillText(o.xl, (L + W - R) / 2, H - 4);
+    const ns = D.series.length;
+    D.series.forEach((s, si) => {
+      x.fillStyle = x.strokeStyle = SERIES[si % SERIES.length];
+      if (kind === 'bar') { const bw = (W - L - R) / n * 0.8 / ns; s.vals.forEach((v, i) => { if (v == null) return; const y0 = py(Math.max(lo, 0)), y = py(v); x.fillRect(px(i, n) - (W - L - R) / n * 0.4 + si * bw, Math.min(y, y0), bw - 2, Math.abs(y0 - y)); }); }
+      else if (kind === 'line') { x.lineWidth = 2.5; x.beginPath(); let st = false; s.vals.forEach((v, i) => { if (v == null) return; const X = pxs(i, n), Y = py(v); st ? x.lineTo(X, Y) : x.moveTo(X, Y); st = true; }); x.stroke(); s.vals.forEach((v, i) => { if (v == null) return; x.beginPath(); x.arc(pxs(i, n), py(v), 3, 0, 7); x.fill(); }); }
+      else { s.vals.forEach((v, i) => { if (v == null) return; x.beginPath(); x.arc(pxs(i, n), py(v), 4, 0, 7); x.fill(); }); }
+    });
+    if (ns > 1) { x.textAlign = 'left'; D.series.forEach((s, i) => { x.fillStyle = SERIES[i % SERIES.length]; x.fillRect(L + i * 90, top - 12, 10, 10); x.fillStyle = '#ececf2'; x.fillText(String(s.name).slice(0, 11), L + 14 + i * 90, top - 3); }); }
+  }
+  function renderChart() {
+    const P = $('#chartPane'); if (!P.classList.contains('show')) return; const o = book.chart;
+    P.innerHTML = '';
+    const cv = h('canvas', {});
+    const seg = h('div', { class: 'seg' }, [['bar', 'Column'], ['line', 'Line'], ['scatter', 'Scatter'], ['pie', 'Pie'], ['donut', 'Donut']].map(([k, l]) => h('button', { class: o.kind === k ? 'on' : '', onclick: () => { o.kind = k; renderChart(); saveSoon(); } }, l)));
+    P.append(h('b', {}, 'Chart · ' + selAddr()), seg, cv,
+      h('label', {}, 'Title', h('input', { value: o.title, oninput: e => { o.title = e.target.value; drawChart(cv, chartData(), o); saveSoon(); } })),
+      h('label', {}, 'x-axis', h('input', { value: o.xl, oninput: e => { o.xl = e.target.value; drawChart(cv, chartData(), o); saveSoon(); } })),
+      h('label', {}, 'y-axis', h('input', { value: o.yl, oninput: e => { o.yl = e.target.value; saveSoon(); } })),
+      h('div', { class: 'small' }, 'Select the cells to plot: headings in the first row, labels (or x values) in the first column, then one column per series. Tap ✓ Use in scene in Psi Phi Studio to make it an animated chart.'));
+    requestAnimationFrame(() => drawChart(cv, chartData(), o));
+  }
+  $('#chartBtn').addEventListener('click', () => { const P = $('#chartPane'); P.classList.toggle('show'); $('#chartBtn').classList.toggle('on', P.classList.contains('show')); renderChart(); });
+
+  /* ================= storage ================= */
+  let dbp = null;
+  const db = () => dbp || (dbp = new Promise((res, rej) => { const r = indexedDB.open('psiphi-calsheet', 1); r.onupgradeneeded = () => { if (!r.result.objectStoreNames.contains('books')) r.result.createObjectStore('books', { keyPath: 'id' }); }; r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }));
+  const tx = async (mode, fn) => { const d = await db(); return new Promise((res, rej) => { const t = d.transaction('books', mode), st = t.objectStore('books'); const q = fn(st); t.oncomplete = () => res(q && q.result); t.onerror = () => rej(t.error); }); };
+  let saveT = 0; const saveSoon = () => { clearTimeout(saveT); saveT = setTimeout(saveNow, 800); };
+  async function saveNow() {
+    if (!book) return; clearTimeout(saveT); book.updated = Date.now();
+    // keep what each sheet shows, so the side panel in Psi Phi Studio can display it without recalculating
+    memo = new Map(); visiting = new Set();
+    for (const s of book.sheets) { const u = usedRange(s), view = []; for (let r = 0; r < Math.min(u.nr, 500); r++) { const row = []; for (let c = 0; c < Math.min(u.nc, 40); c++) { const cell = s.cells[addr(r, c)], v = valueOf(s, r, c), d = display(v, cell && cell.s); row.push(d.t ? [d.t, d.cls === 'num' ? 1 : 0, cell && cell.s && (cell.s.b ? 1 : 0), cell && cell.s && cell.s.bg || ''] : null); } view.push(row); } s.view = view; }
+    try { await tx('readwrite', st => st.put(book)); } catch (e) { console.warn('save failed', e); }
+  }
+  addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveNow(); });
+
+  /* ================= gallery & open ================= */
+  async function openGallery() {
+    await saveNow(); const g = $('#gallery'), list = $('#glist'); g.hidden = false; list.innerHTML = '';
+    const all = ((await tx('readonly', st => st.getAll()).catch(() => [])) || []).sort((a, b) => b.updated - a.updated);
+    if (!all.length) list.append(h('p', { class: 'small' }, 'No spreadsheets yet.'));
+    for (const b of all) list.append(h('div', { class: 'gcard', onclick: () => { g.hidden = true; openBook(b); } }, h('b', {}, b.name), h('br'), h('small', {}, b.sheets.length + ' sheet' + (b.sheets.length > 1 ? 's' : '') + ' · ' + new Date(b.updated).toLocaleDateString()),
+      h('button', { class: 'del', title: 'Delete', onclick: async ev => { ev.stopPropagation(); if (confirm('Delete “' + b.name + '”?')) { await tx('readwrite', st => st.delete(b.id)); openGallery(); } } }, '✕')));
+  }
+  $('#galleryBtn').addEventListener('click', openGallery); $('#gNew').addEventListener('click', async () => { await saveNow(); $('#gallery').hidden = true; openBook(newBook()); });
+  $('#bookName').addEventListener('change', e => { book.name = e.target.value.trim() || book.name; e.target.value = book.name; saveSoon(); });
+  function openBook(b) { book = b; book.chart = book.chart || { kind: 'bar', title: '', xl: '', yl: '' }; sh = book.sheets[book.active || 0] || book.sheets[0]; $('#bookName').value = book.name; buildGrid(); renderTabs(); select(0, 0); recalc(); hist.length = 0; hpos = -1; record(); saveSoon(); }
+
+  /* ================= Psi Phi Studio: bring cells into the scene ================= */
+  const toParent = (m, tr) => { try { if (window.parent !== window) window.parent.postMessage(m, '*', tr || []); } catch (e) { } };
+  let ready = false;
+  function sceneChoice() {
+    const n = norm(sel), many = n.r1 > n.r0 || n.c1 > n.c0;
+    return new Promise(res => {
+      let pick = many ? 'table' : 'panel', kind = book.chart.kind || 'bar', header = true;
+      const d = h('dialog', {}), body = h('div', { class: 'dlg' });
+      const opt = (k, title, sub, dis) => h('button', { class: pick === k ? 'on' : '', disabled: !!dis, onclick: () => { pick = k; render(); } }, h('b', {}, title), h('small', {}, sub));
+      const render = () => { body.innerHTML = ''; body.append(h('h2', {}, 'Bring into your scene'), h('div', { class: 'choice' },
+        opt('table', 'Selected cells as a table', many ? selAddr() + ' as an animatable table.' : 'Select a block of cells first.', !many),
+        opt('chart', 'Selected cells as a chart', many ? 'An animated chart that draws itself in.' : 'Select a block of cells first.', !many),
+        opt('panel', 'Show this sheet beside the stage', 'A side panel with the data, to read from while you record or edit.')),
+        pick === 'table' ? h('label', { class: 'row small' }, h('input', { type: 'checkbox', checked: header, onchange: e => { header = e.target.checked; } }), 'First row is headings') : null,
+        pick === 'chart' ? h('div', { class: 'seg' }, [['bar', 'Column'], ['line', 'Line'], ['scatter', 'Scatter'], ['pie', 'Pie'], ['donut', 'Donut']].map(([k, l]) => h('button', { class: kind === k ? 'on' : '', onclick: () => { kind = k; render(); } }, l))) : null,
+        h('div', { class: 'row', style: 'justify-content:flex-end' }, h('button', { class: 'btn', onclick: () => { d.close(); res(null); } }, 'Cancel'), h('button', { class: 'btn primary', onclick: () => { d.close(); res({ pick, kind, header }); } }, '✓ Use in scene'))); };
+      render(); d.append(body); d.addEventListener('cancel', () => res(null)); d.addEventListener('close', () => setTimeout(() => d.remove(), 50)); document.body.append(d); d.showModal();
+    });
+  }
+  if (EMBED) addEventListener('message', async e => {
+    if (e.source !== window.parent) return; const m = e.data || {};
+    if (m.type === 'st-ping' && ready) toParent({ type: 'st-ready', projId: book.id });
+    if (m.type !== 'st-export') return;
+    try {
+      commitEdit(); await saveNow(); const ch = m.auto || await sceneChoice(); if (!ch) { toParent({ type: 'st-cancel' }); return; }
+      const base = { type: 'st-result', name: book.name + (book.sheets.length > 1 ? ' · ' + sh.name : ''), projId: book.id, sheetId: sh.id, app: 'calsheet', range: selAddr() };
+      if (ch.pick === 'panel') return toParent(Object.assign(base, { kind: 'panel', source: 'calsheet' }));
+      const n = norm(sel);
+      if (ch.pick === 'table') return toParent(Object.assign(base, { kind: 'table', csv: sheetCSV(sh, n, false), header: ch.header }));
+      const D = chartData(); if (!D || !D.series.length) { toast('Those cells have no numbers to chart.'); return toParent({ type: 'st-cancel' }); }
+      const rows = [[D.catName || 'label', ...D.series.map(s => s.name)], ...D.cats.map((c, i) => [c, ...D.series.map(s => s.vals[i] == null ? '' : +(+s.vals[i]).toPrecision(10))])];
+      toParent(Object.assign(base, { kind: 'chart', chart: ch.kind, csv: rows.map(r => r.map(v => csvCell(String(v))).join(',')).join('\n'), title: book.chart.title || '', xlabel: book.chart.xl || D.catName || '', ylabel: book.chart.yl || (D.series.length === 1 ? D.series[0].name : '') }));
+    } catch (err) { toParent({ type: 'st-error', message: (err && err.message) || String(err) }); }
+  });
+  window.Calsheet = { get book() { return book; }, get sheet() { return sh; }, setCell: (a, v) => { const p = parseAddr(a); setCell(p.r, p.c, v); change(); }, value: a => { const p = parseAddr(a); memo = new Map(); return valueOf(sh, p.r, p.c); }, display: a => { const p = parseAddr(a); const c = sh.cells[a]; return display(valueOf(sh, p.r, p.c), c && c.s).t; }, select: (a, b) => { const p = parseAddr(a), q = parseAddr(b || a); select(p.r, p.c, q.r, q.c); }, styleSel, insertRow, deleteRows, insertCol, sortSel, fill, chartData, undo, redo, saveNow, sceneChoice, readXLSX };
+
+  buildRibbon();
+  (async () => {
+    let b = null; const pid = QS.get('proj'), nw = QS.get('new');
+    if (pid) b = await tx('readonly', st => st.get(pid)).catch(() => null);
+    if (!b && nw === 'gallery') { const all = ((await tx('readonly', st => st.getAll()).catch(() => [])) || []).sort((a, c) => c.updated - a.updated); if (all.length) { openBook(all[0]); openGallery(); ready = true; if (EMBED) toParent({ type: 'st-ready', projId: book.id }); return; } }
+    if (!b && !EMBED && !nw) { const all = ((await tx('readonly', st => st.getAll()).catch(() => [])) || []).sort((a, c) => c.updated - a.updated); b = all[0]; }
+    openBook(b || newBook());
+    ready = true; if (EMBED) toParent({ type: 'st-ready', projId: book.id });
+  })();
+})();
+</script>
+</body>
+</html>

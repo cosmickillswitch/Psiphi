@@ -1,0 +1,5 @@
+@font-face{font-family:"LM";font-style:normal;font-weight:400;font-display:block;src:url(lm-regular.woff) format("woff")}
+@font-face{font-family:"LM";font-style:italic;font-weight:400;font-display:block;src:url(lm-italic.woff) format("woff")}
+@font-face{font-family:"LM";font-style:normal;font-weight:700;font-display:block;src:url(lm-bold.woff) format("woff")}
+@font-face{font-family:"LM";font-style:italic;font-weight:700;font-display:block;src:url(lm-bolditalic.woff) format("woff")}
+@font-face{font-family:"LMMath";font-style:normal;font-weight:400;font-display:block;src:url(lm-math.woff) format("woff")}

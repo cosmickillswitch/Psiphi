@@ -1,0 +1,1201 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Tabula · Psi Phi Studio</title>
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+:root{--bg:#151518;--bar:rgba(22,22,26,.92);--panel:#232329;--panel2:#2d2d35;--panel3:#393943;--ink:#f0f0f5;--muted:#9b9bab;--rule:#3a3a46;--accent:#4aa3ff;--warm:#f0ac5f}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:14px/1.35 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit}
+input,select{font:inherit;color:var(--ink);background:var(--panel2);border:1px solid var(--rule);border-radius:8px;padding:5px 8px}
+#view{position:fixed;inset:0;width:100%;height:100%;touch-action:none;background:#3a3a40}
+#top{position:fixed;left:0;right:0;top:0;height:calc(46px + env(safe-area-inset-top));padding:env(safe-area-inset-top) 10px 0;display:flex;align-items:center;gap:4px;background:var(--bar);backdrop-filter:blur(10px);z-index:10}
+.tb{display:inline-grid;place-items:center;min-width:40px;height:38px;padding:0 9px;border:0;border-radius:10px;background:transparent;cursor:pointer;font-size:15px}
+.tb:hover{background:rgba(255,255,255,.07)}
+.tb.on{color:var(--accent)}
+.tb svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.tb .lbl{font-size:14px;font-weight:500}
+.grow{flex:1}
+#colourBtn{width:30px;height:30px;min-width:30px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.5);margin-left:6px;padding:0;touch-action:none}
+#docTitle{font-weight:600;color:var(--muted);font-size:13px;margin-left:6px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#side{position:fixed;left:8px;top:50%;transform:translateY(-50%);z-index:9;display:flex;flex-direction:column;align-items:center;gap:10px;background:var(--bar);border-radius:14px;padding:10px 6px;backdrop-filter:blur(10px)}
+.vslider{position:relative;width:30px;height:150px;border-radius:15px;background:#111;touch-action:none;cursor:ns-resize;overflow:hidden}
+.vslider i{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(#5a5a66,#3c3c46)}
+.vslider b{position:absolute;left:3px;right:3px;height:12px;border-radius:6px;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.6)}
+#modBtn{width:30px;height:30px;border-radius:7px;border:1px solid #666;background:#1b1b20;cursor:pointer}
+#side .tb{min-width:34px;height:34px;padding:0}
+#sliderTip{position:fixed;left:56px;z-index:12;background:rgba(10,10,14,.92);border:1px solid var(--rule);border-radius:10px;padding:6px 10px;font-size:13px;pointer-events:none;display:none}
+.pop{position:fixed;z-index:20;background:var(--panel);border:1px solid var(--rule);border-radius:16px;box-shadow:0 18px 40px rgba(0,0,0,.55);max-height:calc(100vh - 80px);overflow:auto;-webkit-overflow-scrolling:touch}
+.pop h3{margin:0;padding:12px 14px 8px;font-size:15px;display:flex;align-items:center;gap:8px}
+.pop h3 .grow{flex:1}
+.pbtn{border:1px solid var(--rule);background:var(--panel2);border-radius:9px;padding:6px 11px;cursor:pointer}
+.pbtn:hover{background:var(--panel3)}
+.pbtn.primary{background:var(--accent);border-color:var(--accent);color:#04121f;font-weight:600}
+.pbtn.on{border-color:var(--accent);color:var(--accent)}
+.pbtn.sm{padding:4px 8px;font-size:12px}
+/* brushes */
+#brushPop{width:430px;display:grid;grid-template-columns:130px 1fr}
+#brushPop h3{grid-column:1/-1}
+.bcats{border-right:1px solid var(--rule);padding:4px}
+.bcats button{display:block;width:100%;text-align:left;border:0;background:transparent;padding:9px 10px;border-radius:8px;cursor:pointer}
+.bcats button.on{background:var(--accent);color:#04121f}
+.blist{padding:6px;display:flex;flex-direction:column;gap:6px}
+.bitem{display:flex;flex-direction:column;gap:2px;border:1px solid transparent;border-radius:10px;padding:6px 8px;background:var(--panel2);cursor:pointer}
+.bitem.on{border-color:var(--accent)}
+.bitem span{font-size:13px}
+.bitem canvas{width:100%;height:42px}
+.bset{grid-column:1/-1;border-top:1px solid var(--rule);padding:10px 14px;display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted)}
+.bset input[type=range]{flex:1}
+/* layers */
+#layerPop{width:330px;padding-bottom:8px}
+.lrow{display:flex;align-items:center;gap:10px;margin:4px 8px;padding:6px 8px;border-radius:10px;background:var(--panel2);cursor:pointer;border:1px solid transparent}
+.lrow.on{background:#1d4f86;border-color:var(--accent)}
+.lrow canvas{width:46px;height:34px;border-radius:4px;flex:none;background-color:#fff;background-image:linear-gradient(45deg,#ccc 25%,transparent 25%,transparent 75%,#ccc 75%),linear-gradient(45deg,#ccc 25%,transparent 25%,transparent 75%,#ccc 75%);background-size:8px 8px;background-position:0 0,4px 4px}
+.lrow .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lrow .nm small{display:block;color:var(--muted);font-size:11px}
+.lrow .bm{width:26px;height:26px;border-radius:6px;border:0;background:rgba(255,255,255,.08);cursor:pointer;font-size:12px;font-weight:700}
+.lrow input[type=checkbox]{width:20px;height:20px;accent-color:var(--accent)}
+.lrow.clip{margin-left:26px}
+.lrow .bgsw{width:46px;height:34px;border-radius:4px;flex:none;border:1px solid var(--rule)}
+.lmenu{margin:2px 8px 8px 8px;padding:8px;border-radius:10px;background:#1b1b21;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.lmenu button{border:0;background:var(--panel2);border-radius:8px;padding:8px;cursor:pointer;text-align:left;font-size:13px}
+.lmenu button.on{background:var(--accent);color:#04121f}
+.lmenu .full{grid-column:1/-1;display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.lmenu select{flex:1}
+/* colour */
+#colourPop{width:320px;padding:0 14px 14px}
+#sv{width:100%;height:190px;border-radius:12px;touch-action:none;display:block}
+#hueBar{width:100%;height:22px;border-radius:11px;margin-top:10px;touch-action:none;display:block}
+.chist{display:grid;grid-template-columns:repeat(10,1fr);gap:5px;margin-top:10px}
+.chist i{aspect-ratio:1;border-radius:50%;cursor:pointer;border:1px solid rgba(0,0,0,.5)}
+.pal{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;margin-top:6px}
+.pal i{aspect-ratio:1;border-radius:5px;cursor:pointer;border:1px solid rgba(0,0,0,.4)}
+.small{font-size:12px;color:var(--muted)}
+/* menus */
+.menuPop{min-width:270px;padding:6px}
+.menuPop button.mi{display:flex;width:100%;align-items:center;gap:10px;border:0;background:transparent;padding:10px;border-radius:9px;cursor:pointer;text-align:left}
+.menuPop button.mi:hover{background:var(--panel2)}
+.menuPop button.mi span{flex:1}
+.menuPop button.mi em{font-style:normal;color:var(--accent);font-size:12px}
+.menuPop hr{border:0;border-top:1px solid var(--rule);margin:4px 6px}
+.menuPop .cap{padding:6px 10px 2px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+/* bottom panels */
+#anim{position:fixed;left:0;right:0;bottom:0;z-index:9;background:var(--bar);backdrop-filter:blur(10px);display:flex;align-items:center;gap:6px;padding:8px 10px calc(8px + env(safe-area-inset-bottom))}
+#anim[hidden]{display:none}
+#frames{display:flex;gap:6px;overflow-x:auto;flex:1;min-width:0;padding:3px}
+.fthumb{position:relative;flex:none;height:62px;border-radius:7px;border:2px solid transparent;cursor:pointer;overflow:hidden;background:#fff}
+.fthumb.on{border-color:var(--accent)}
+.fthumb canvas{display:block;height:100%}
+.fthumb span{position:absolute;left:4px;bottom:2px;font-size:10px;font-weight:700;color:#000;background:rgba(255,255,255,.75);border-radius:4px;padding:0 3px}
+#adjPanel,#tfPanel{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:11;background:var(--panel);border:1px solid var(--rule);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;min-width:min(440px,92vw);box-shadow:0 12px 30px rgba(0,0,0,.5)}
+#adjPanel[hidden],#tfPanel[hidden]{display:none}
+#selPanel{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:11;background:var(--panel);border:1px solid var(--rule);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;max-width:96vw;box-shadow:0 12px 30px rgba(0,0,0,.5)}
+#selPanel[hidden]{display:none}
+.seg{display:inline-flex;background:#17171c;border-radius:10px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;padding:6px 10px;border-radius:8px;cursor:pointer;font-size:13px}
+.seg button.on{background:var(--accent);color:#04121f;font-weight:600}
+#selChip{position:fixed;left:62px;top:calc(54px + env(safe-area-inset-top));z-index:9;border:1px solid var(--rule);background:var(--bar);border-radius:999px;padding:6px 12px;font-size:12px;cursor:pointer;color:var(--ink)}
+#selChip[hidden]{display:none}
+body.anim-on #selPanel,body.anim-on #tfPanel{bottom:calc(96px + env(safe-area-inset-bottom))}
+#adjPanel label{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted)}
+#adjPanel label span{width:90px}
+#adjPanel input[type=range]{flex:1}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+#toast{position:fixed;left:50%;top:calc(60px + env(safe-area-inset-top));transform:translateX(-50%);background:rgba(10,10,14,.92);border:1px solid var(--rule);padding:7px 14px;border-radius:999px;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:40;text-align:center;max-width:86vw}
+#toast.show{opacity:1}
+#dropDot{position:fixed;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;border:3px solid #fff;z-index:30;pointer-events:none;display:none;box-shadow:0 4px 14px rgba(0,0,0,.5)}
+dialog{background:var(--panel);color:var(--ink);border:1px solid var(--rule);border-radius:18px;padding:0;width:min(560px,94vw)}
+dialog::backdrop{background:rgba(0,0,0,.55)}
+.dlg{padding:18px;display:flex;flex-direction:column;gap:12px}
+.dlg h2{margin:0;font-size:19px}
+.presets{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.presets button{padding:12px 8px;border-radius:12px;border:1px solid var(--rule);background:var(--panel2);cursor:pointer;text-align:left}
+.presets button:hover{border-color:var(--accent)}
+.presets b{display:block}
+.presets small{color:var(--muted)}
+.choice{display:flex;gap:8px}
+.choice button{flex:1;padding:12px;border-radius:12px;border:1px solid var(--rule);background:var(--panel2);cursor:pointer;text-align:left}
+.choice button.on{border-color:var(--accent);background:#173a61}
+.choice b{display:block}
+.choice small{color:var(--muted)}
+#gallery{position:fixed;inset:0;background:#0f0f12;z-index:30;display:flex;flex-direction:column;padding:16px;padding-top:calc(16px + env(safe-area-inset-top));overflow:auto}
+#gallery[hidden]{display:none}
+#gallery header{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+#gallery h1{margin:0;font-size:28px}
+#glist{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:18px}
+.gcard{cursor:pointer;position:relative}
+.gcard img{display:block;width:100%;aspect-ratio:4/3;object-fit:contain;background:#222;border-radius:10px}
+.gcard div{padding:6px 2px;font-size:13px}
+.gcard small{color:var(--muted)}
+.gcard .del{position:absolute;right:6px;top:6px;border:0;border-radius:999px;width:28px;height:28px;background:rgba(0,0,0,.6);cursor:pointer}
+body.embed #galleryBtn{display:none}
+body.zen #top,body.zen #side,body.zen #anim{display:none}
+</style>
+</head>
+<body>
+<canvas id="view"></canvas>
+<header id="top">
+  <button class="tb" id="galleryBtn"><span class="lbl">Gallery</span></button>
+  <button class="tb" id="actBtn" title="Actions"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.2L4 16.8V20h3.2l5.3-5.3a4 4 0 0 0 5.2-5.4l-2.4 2.4-2.6-.6-.6-2.6z"/></svg></button>
+  <button class="tb" id="adjBtn" title="Adjustments"><svg viewBox="0 0 24 24"><path d="M5 19L15 9"/><path d="M15 9l2-2"/><path d="M18 3v3M16.5 4.5h3M20 9v2M19 10h2M11 3v2M10 4h2"/></svg></button>
+  <button class="tb" id="selBtn" title="Selection"><svg viewBox="0 0 24 24"><path d="M5 9c0-3 3.5-5 7.5-5S20 6 20 9s-3.5 5-7.5 5c-1.2 0-2.4-.2-3.4-.5" stroke-dasharray="2.6 2.2"/><path d="M8 13c-2 0-3 1.3-3 2.6S6.3 18 8 18c1.3 0 2-1 2-2.2S9.3 13 8 13z"/><path d="M8 18v3"/></svg></button>
+  <button class="tb" id="tfBtn" title="Transform the layer"><svg viewBox="0 0 24 24"><path d="M5 19L19 5"/><path d="M11 5h8v8"/></svg></button>
+  <span id="docTitle"></span>
+  <span class="grow"></span>
+  <button class="tb" id="animBtn" title="Animation"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 6v12M17 6v12M3 10h4M3 14h4M17 10h4M17 14h4"/></svg></button>
+  <button class="tb" id="brushBtn" title="Paint (brush library)"><svg viewBox="0 0 24 24"><path d="M20 4c-3 1-8 6-10 9l2 2c3-2 8-7 9-10z"/><path d="M9 14c-2 0-4 1-4 3s-1 3-2 3c3 1 7 0 7-3z"/></svg></button>
+  <button class="tb" id="blendBtn" title="Blend (N)"><svg viewBox="0 0 24 24"><path d="M12 3c3 4 6 7 6 11a6 6 0 0 1-12 0c0-4 3-7 6-11z"/><path d="M9 15a3 3 0 0 0 3 3"/></svg></button>
+  <button class="tb" id="smudgeBtn" title="Smudge"><svg viewBox="0 0 24 24"><path d="M9 11V5a1.5 1.5 0 0 1 3 0v5"/><path d="M12 10V4a1.5 1.5 0 0 1 3 0v6"/><path d="M15 10V6a1.5 1.5 0 0 1 3 0v8c0 4-3 7-7 7-3 0-5-2-6-5l-1-3a1.5 1.5 0 0 1 2.7-1.2L9 14"/></svg></button>
+  <button class="tb" id="eraserBtn" title="Eraser"><svg viewBox="0 0 24 24"><path d="M8 20h11"/><path d="M4 15l9-9 6 6-8 8H9z"/><path d="M9 10l6 6"/></svg></button>
+  <button class="tb" id="layersBtn" title="Layers"><svg viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 12l9 5 9-5"/><path d="M3 16l9 5 9-5"/></svg></button>
+  <button class="tb" id="colourBtn" title="Colour (drag onto the canvas to fill)"></button>
+</header>
+<div id="side">
+  <div class="vslider" id="sizeSl" title="Brush size"><i></i><b></b></div>
+  <button id="modBtn" title="Hold, then touch the canvas to pick a colour"></button>
+  <div class="vslider" id="opSl" title="Opacity"><i></i><b></b></div>
+  <button class="tb" id="undoBtn" title="Undo (two-finger tap)"><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
+  <button class="tb" id="redoBtn" title="Redo (three-finger tap)"><svg viewBox="0 0 24 24"><path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/></svg></button>
+</div>
+<div id="sliderTip"></div>
+<div id="anim" hidden>
+  <button class="tb" id="playBtn" title="Play"><svg viewBox="0 0 24 24"><path d="M7 5l12 7-12 7z" fill="currentColor"/></svg></button>
+  <div id="frames"></div>
+  <button class="tb" id="frAdd" title="Add a blank frame">＋</button>
+  <button class="tb" id="frDup" title="Duplicate this frame">⧉</button>
+  <button class="tb" id="frDel" title="Delete this frame">🗑</button>
+  <button class="tb" id="animSet" title="Animation settings">⚙</button>
+</div>
+<div id="adjPanel" hidden></div>
+<div id="tfPanel" hidden></div>
+<div id="selPanel" hidden></div>
+<button id="selChip" hidden>Selection on · <b>Deselect</b></button>
+<div id="dropDot"></div>
+<div id="gallery" hidden><header><h1>Tabula</h1><span class="grow"></span><button class="pbtn primary" id="gNew">＋ New canvas</button></header><div id="glist"></div></div>
+<div id="toast" role="status"></div>
+<script>
+'use strict';
+(() => {
+  const $ = s => document.querySelector(s);
+  const h = (tag, attrs, ...kids) => { const e = document.createElement(tag); for (const [k, v] of Object.entries(attrs || {})) { if (v == null || v === false) continue; if (k.startsWith('on')) e.addEventListener(k.slice(2), v); else if (k === 'class') e.className = v; else if (k === 'style') e.style.cssText = v; else if (k in e && k !== 'list') try { e[k] = v; } catch (x) { e.setAttribute(k, v); } else e.setAttribute(k, v); } for (const c of kids.flat()) if (c != null) e.append(c.nodeType ? c : String(c)); return e; };
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  let tt = 0; const toast = (m, ms) => { const t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), ms || 2000); };
+  const QS = new URLSearchParams(location.search), EMBED = QS.has('embed');
+  if (EMBED) document.body.classList.add('embed');
+  const canvas = (w, hh) => { const c = document.createElement('canvas'); c.width = w; c.height = hh; return c; };
+  const ctx2 = c => c.getContext('2d');
+  const toBlob = c => new Promise(r => c.toBlob(r, 'image/png'));
+  function seeded(s) { return () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; }; }
+
+  /* ================= brushes ================= */
+  // tex: which paper texture shows through (paper, canvas, rough); wet: how much colour it picks up from the picture;
+  // hue/lum: colour variation per dab; scatter, sizeJit, angle as before
+  const BRUSHES = [
+    { id: 'hb', cat: 'Sketching', name: 'HB Pencil', tip: 'pencil', size: 5, max: 40, op: 0.85, flow: 0.5, spacing: 0.1, pSize: 0.35, pOp: 0.8, grain: 0.75, stream: 0.2, tilt: true },
+    { id: '6b', cat: 'Sketching', name: '6B Pencil', tip: 'pencil', size: 14, max: 90, op: 1, flow: 0.65, spacing: 0.08, pSize: 0.45, pOp: 0.7, grain: 0.9, tex: 'rough', stream: 0.15, tilt: true },
+    { id: 'mech', cat: 'Sketching', name: 'Mechanical Pencil', tip: 'round', size: 3, max: 16, op: 0.9, flow: 0.7, spacing: 0.08, pSize: 0.1, pOp: 0.6, grain: 0.5, stream: 0.3 },
+    { id: 'blue', cat: 'Sketching', name: 'Blue Sketch', tip: 'pencil', size: 6, max: 40, op: 0.55, flow: 0.55, spacing: 0.1, pSize: 0.3, pOp: 0.7, grain: 0.7, stream: 0.25, tilt: true, fixCol: '#5b8fd6' },
+    { id: 'ballpoint', cat: 'Sketching', name: 'Ballpoint', tip: 'round', size: 3, max: 14, op: 0.95, flow: 0.85, spacing: 0.06, pSize: 0.25, pOp: 0.5, grain: 0.2, stream: 0.35 },
+    { id: 'studio', cat: 'Inking', name: 'Studio Pen', tip: 'round', size: 10, max: 120, op: 1, flow: 1, spacing: 0.04, pSize: 0.85, pOp: 0, stream: 0.55, taper: 1 },
+    { id: 'tech', cat: 'Inking', name: 'Technical Pen', tip: 'round', size: 6, max: 80, op: 1, flow: 1, spacing: 0.04, pSize: 0.1, pOp: 0, stream: 0.5 },
+    { id: 'fine', cat: 'Inking', name: 'Fineliner', tip: 'round', size: 4, max: 30, op: 1, flow: 1, spacing: 0.04, pSize: 0.05, pOp: 0, stream: 0.6 },
+    { id: 'nib', cat: 'Inking', name: 'Dip Nib', tip: 'nib', size: 16, max: 120, op: 1, flow: 1, spacing: 0.03, pSize: 1, pOp: 0, angle: 'fixed', ang: 0.8, stream: 0.5, taper: 1 },
+    { id: 'dryink', cat: 'Inking', name: 'Dry Ink', tip: 'ink', size: 14, max: 140, op: 1, flow: 0.95, spacing: 0.05, pSize: 0.7, pOp: 0.2, grain: 0.5, tex: 'rough', stream: 0.35 },
+    { id: 'felt', cat: 'Inking', name: 'Felt Tip', tip: 'round', size: 12, max: 60, op: 0.85, flow: 0.6, spacing: 0.05, pSize: 0.2, pOp: 0.2, grain: 0.25, stream: 0.35 },
+    { id: 'round', cat: 'Painting', name: 'Round Brush', tip: 'round', size: 34, max: 400, op: 1, flow: 0.9, spacing: 0.05, pSize: 0.6, pOp: 0.3, stream: 0.25 },
+    { id: 'acrylic', cat: 'Painting', name: 'Wet Acrylic', tip: 'ink', size: 44, max: 400, op: 1, flow: 0.85, spacing: 0.05, pSize: 0.45, pOp: 0.3, grain: 0.35, tex: 'canvas', wet: 0.45, angle: 'dir', stream: 0.2 },
+    { id: 'gouache', cat: 'Painting', name: 'Gouache', tip: 'flat', size: 46, max: 400, op: 1, flow: 0.85, spacing: 0.04, pSize: 0.4, pOp: 0.35, grain: 0.45, angle: 'dir', stream: 0.2 },
+    { id: 'oil', cat: 'Painting', name: 'Oil Bristles', tip: 'bristle', size: 56, max: 400, op: 1, flow: 0.75, spacing: 0.035, pSize: 0.3, pOp: 0.45, angle: 'dir', wet: 0.35, tex: 'canvas', grain: 0.25, stream: 0.2 },
+    { id: 'knife', cat: 'Painting', name: 'Palette Knife', tip: 'square', size: 60, max: 400, op: 1, flow: 1, spacing: 0.03, pSize: 0.3, pOp: 0.2, angle: 'dir', wet: 0.6, grain: 0.15, tex: 'canvas', stream: 0.25 },
+    { id: 'water', cat: 'Watercolour', name: 'Watercolour', tip: 'soft', size: 100, max: 600, op: 0.55, flow: 0.16, spacing: 0.05, pSize: 0.5, pOp: 0.6, grain: 0.55, tex: 'paper', wet: 0.25, stream: 0.2 },
+    { id: 'wash', cat: 'Watercolour', name: 'Flat Wash', tip: 'flat', size: 120, max: 700, op: 0.45, flow: 0.2, spacing: 0.04, pSize: 0.3, pOp: 0.5, grain: 0.45, wet: 0.35, angle: 'fixed', ang: 0, stream: 0.2 },
+    { id: 'wetedge', cat: 'Watercolour', name: 'Wet Bleed', tip: 'cloud', size: 140, max: 700, op: 0.5, flow: 0.14, spacing: 0.08, pSize: 0.4, pOp: 0.6, grain: 0.4, wet: 0.5, angle: 'random', scatter: 0.06, stream: 0.15 },
+    { id: 'soft', cat: 'Airbrushing', name: 'Soft Airbrush', tip: 'soft', size: 140, max: 900, op: 1, flow: 0.1, spacing: 0.06, pSize: 0.2, pOp: 0.9, stream: 0.1 },
+    { id: 'hardair', cat: 'Airbrushing', name: 'Hard Airbrush', tip: 'round', size: 90, max: 700, op: 1, flow: 0.22, spacing: 0.06, pSize: 0.2, pOp: 0.9, stream: 0.1 },
+    { id: 'spray', cat: 'Airbrushing', name: 'Spray Paint', tip: 'spray', size: 120, max: 700, op: 1, flow: 0.5, spacing: 0.12, pSize: 0.3, pOp: 0.6, angle: 'random', stream: 0.1 },
+    { id: 'charcoal', cat: 'Artistic', name: 'Charcoal', tip: 'chalk', size: 32, max: 240, op: 1, flow: 0.5, spacing: 0.06, pSize: 0.4, pOp: 0.6, grain: 0.95, tex: 'rough', angle: 'random', stream: 0.15 },
+    { id: 'pastel', cat: 'Artistic', name: 'Soft Pastel', tip: 'chalk', size: 54, max: 320, op: 0.9, flow: 0.35, spacing: 0.06, pSize: 0.3, pOp: 0.6, grain: 0.9, angle: 'random', stream: 0.15 },
+    { id: 'crayon', cat: 'Artistic', name: 'Wax Crayon', tip: 'chalk', size: 22, max: 120, op: 1, flow: 0.8, spacing: 0.05, pSize: 0.3, pOp: 0.3, grain: 0.85, tex: 'rough', angle: 'dir', stream: 0.2 },
+    { id: 'conte', cat: 'Artistic', name: 'Conté', tip: 'square', size: 20, max: 140, op: 0.95, flow: 0.6, spacing: 0.05, pSize: 0.3, pOp: 0.5, grain: 0.8, tex: 'paper', angle: 'dir', stream: 0.2 },
+    { id: 'brushpen', cat: 'Calligraphy', name: 'Brush Pen', tip: 'flat', size: 26, max: 160, op: 1, flow: 1, spacing: 0.03, pSize: 0.9, pOp: 0, angle: 'fixed', ang: -0.6, stream: 0.45, taper: 1 },
+    { id: 'marker', cat: 'Calligraphy', name: 'Marker', tip: 'square', size: 30, max: 220, op: 0.7, flow: 1, spacing: 0.04, pSize: 0.1, pOp: 0, angle: 'fixed', ang: 0.35, stream: 0.3 },
+    { id: 'chisel', cat: 'Calligraphy', name: 'Chisel', tip: 'nib', size: 30, max: 200, op: 1, flow: 1, spacing: 0.03, pSize: 0.4, pOp: 0, angle: 'fixed', ang: 0.6, stream: 0.4 },
+    { id: 'foliage', cat: 'Nature', name: 'Foliage', tip: 'leaf', size: 60, max: 300, op: 1, flow: 1, spacing: 0.35, pSize: 0.4, pOp: 0.2, angle: 'random', scatter: 0.5, sizeJit: 0.5, hue: 0.06, lum: 0.18, stream: 0 },
+    { id: 'grass', cat: 'Nature', name: 'Grass', tip: 'blade', size: 70, max: 300, op: 1, flow: 1, spacing: 0.12, pSize: 0.4, pOp: 0.2, angle: 'fixed', ang: 0, angJit: 0.35, scatter: 0.25, sizeJit: 0.5, hue: 0.05, lum: 0.2, stream: 0 },
+    { id: 'clouds', cat: 'Nature', name: 'Clouds', tip: 'cloud', size: 220, max: 900, op: 0.9, flow: 0.3, spacing: 0.2, pSize: 0.3, pOp: 0.6, angle: 'random', scatter: 0.15, sizeJit: 0.4, stream: 0.1 },
+    { id: 'stars', cat: 'Nature', name: 'Stars', tip: 'star', size: 18, max: 120, op: 1, flow: 1, spacing: 1.4, pSize: 0.5, pOp: 0.3, scatter: 3, sizeJit: 0.8, angle: 'random', lum: 0.2, stream: 0 },
+    { id: 'splatter', cat: 'Texture', name: 'Splatter', tip: 'splat', size: 130, max: 700, op: 1, flow: 0.9, spacing: 0.6, pSize: 0.4, pOp: 0.3, angle: 'random', scatter: 0.3, stream: 0 },
+    { id: 'stipple', cat: 'Texture', name: 'Stipple', tip: 'round', size: 7, max: 50, op: 1, flow: 1, spacing: 1.6, pSize: 0.4, pOp: 0.2, scatter: 2.5, sizeJit: 0.6, stream: 0 },
+    { id: 'hatch', cat: 'Texture', name: 'Hatching', tip: 'hatch', size: 40, max: 200, op: 1, flow: 0.9, spacing: 0.45, pSize: 0.3, pOp: 0.3, angle: 'fixed', ang: 0.8, stream: 0.2 },
+    { id: 'noise', cat: 'Texture', name: 'Grit', tip: 'soft', size: 90, max: 500, op: 1, flow: 0.35, spacing: 0.1, pSize: 0.3, pOp: 0.5, grain: 1, tex: 'rough', stream: 0.1 },
+    { id: 'blendsoft', cat: 'Blending', name: 'Soft Blender', tip: 'soft', size: 80, max: 500, op: 0.7, flow: 1, spacing: 0.08, pSize: 0.3, pOp: 0.6, stream: 0.2, blendOnly: true },
+    { id: 'blendstump', cat: 'Blending', name: 'Paper Stump', tip: 'round', size: 40, max: 300, op: 0.6, flow: 1, spacing: 0.08, pSize: 0.4, pOp: 0.6, grain: 0.5, stream: 0.2, blendOnly: true },
+    { id: 'blendwater', cat: 'Blending', name: 'Water Blend', tip: 'cloud', size: 110, max: 600, op: 0.8, flow: 1, spacing: 0.1, pSize: 0.3, pOp: 0.5, stream: 0.15, blendOnly: true }
+  ];
+  const BY = Object.fromEntries(BRUSHES.map(b => [b.id, b]));
+  const CATS = [...new Set(BRUSHES.map(b => b.cat))];
+  const bset = {}; for (const b of BRUSHES) bset[b.id] = { size: b.size, op: b.op, stream: b.stream };
+  const TIP = 128, tips = {};
+  function makeTip(kind) {
+    const c = canvas(TIP, TIP), x = ctx2(c), r = TIP / 2 - 2, C0 = TIP / 2, rnd = seeded(kind.length * 977 + 13);
+    x.fillStyle = '#fff';
+    const radial = (stops, rr) => { const g = x.createRadialGradient(C0, C0, 0, C0, C0, rr || r); for (const [t, a] of stops) g.addColorStop(t, 'rgba(255,255,255,' + a + ')'); x.fillStyle = g; x.fillRect(0, 0, TIP, TIP); x.fillStyle = '#fff'; };
+    // a hard round edge with a pixel of soft rim, so small brushes stay smooth
+    if (kind === 'round') radial([[0, 1], [0.93, 1], [1, 0]]);
+    else if (kind === 'pencil') radial([[0, 1], [0.6, 0.95], [1, 0]]);
+    else if (kind === 'soft') { const g = x.createRadialGradient(C0, C0, 0, C0, C0, r); for (let i = 0; i <= 10; i++) { const t = i / 10; g.addColorStop(t, 'rgba(255,255,255,' + Math.exp(-t * t * 4.5) * (1 - t) + ')'); } x.fillStyle = g; x.fillRect(0, 0, TIP, TIP); }
+    else if (kind === 'square') { x.filter = 'blur(1px)'; x.fillRect(12, 12, TIP - 24, TIP - 24); x.filter = 'none'; }
+    else if (kind === 'flat') { x.save(); x.translate(C0, C0); x.scale(1, 0.28); const g = x.createRadialGradient(0, 0, 0, 0, 0, r); g.addColorStop(0, '#fff'); g.addColorStop(0.9, '#fff'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.beginPath(); x.arc(0, 0, r, 0, 7); x.fill(); x.restore(); }
+    else if (kind === 'nib') { x.save(); x.translate(C0, C0); x.scale(1, 0.12); x.beginPath(); x.arc(0, 0, r, 0, 7); x.fill(); x.restore(); }
+    else if (kind === 'ink' || kind === 'chalk') {
+      // an uneven, smooth-edged blob: the paper texture gives it its grit
+      const lobes = [rnd() * 6, rnd() * 6, rnd() * 6], amp = kind === 'chalk' ? 1 : 0.5;
+      x.beginPath(); for (let i = 0; i <= 64; i++) { const th = i / 64 * Math.PI * 2, R = r * (0.86 + amp * (0.07 * Math.sin(3 * th + lobes[0]) + 0.04 * Math.sin(5 * th + lobes[1]) + 0.03 * Math.sin(11 * th + lobes[2]))); const px = C0 + Math.cos(th) * R, py = C0 + Math.sin(th) * R; i ? x.lineTo(px, py) : x.moveTo(px, py); }
+      x.closePath(); x.shadowColor = '#fff'; x.shadowBlur = 3; x.fill(); x.shadowBlur = 0;
+    }
+    else if (kind === 'bristle') { for (let i = 0; i < 22; i++) { const px = 10 + (TIP - 20) * i / 21, py = C0 + (rnd() - 0.5) * 16; const g = x.createRadialGradient(px, py, 0, px, py, 12); g.addColorStop(0, 'rgba(255,255,255,' + (0.55 + rnd() * 0.45) + ')'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.save(); x.translate(px, py); x.scale(0.4, 1.6); x.translate(-px, -py); x.fillRect(px - 12, py - 12, 24, 24); x.restore(); } }
+    else if (kind === 'splat') { for (let i = 0; i < 46; i++) { const a = rnd() * 7, d = Math.pow(rnd(), 0.7) * r * 0.95, rr = 1 + Math.pow(rnd(), 3) * 12; x.beginPath(); x.arc(C0 + Math.cos(a) * d, C0 + Math.sin(a) * d, rr, 0, 7); x.fill(); } }
+    else if (kind === 'spray') { for (let i = 0; i < 260; i++) { const a = rnd() * 7, d = Math.sqrt(-2 * Math.log(1 - rnd() * 0.999)) * r * 0.34; if (d > r) continue; x.globalAlpha = 0.5 + rnd() * 0.5; x.beginPath(); x.arc(C0 + Math.cos(a) * d, C0 + Math.sin(a) * d, 0.8 + rnd() * 1.6, 0, 7); x.fill(); } x.globalAlpha = 1; }
+    else if (kind === 'cloud') { for (let i = 0; i < 14; i++) { const a = rnd() * 7, d = rnd() * r * 0.5, rr = r * (0.25 + rnd() * 0.3), px = C0 + Math.cos(a) * d, py = C0 + Math.sin(a) * d * 0.7; const g = x.createRadialGradient(px, py, 0, px, py, rr); g.addColorStop(0, 'rgba(255,255,255,.55)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, TIP, TIP); } }
+    else if (kind === 'leaf') { x.beginPath(); x.moveTo(C0, 6); x.bezierCurveTo(C0 + r * 0.7, C0 - r * 0.3, C0 + r * 0.5, C0 + r * 0.6, C0, TIP - 6); x.bezierCurveTo(C0 - r * 0.5, C0 + r * 0.6, C0 - r * 0.7, C0 - r * 0.3, C0, 6); x.fill(); }
+    else if (kind === 'blade') { for (let i = 0; i < 5; i++) { const bx = C0 + (rnd() - 0.5) * r * 0.8, lean = (rnd() - 0.5) * r * 0.6, w = 2 + rnd() * 3; x.beginPath(); x.moveTo(bx - w, TIP - 4); x.quadraticCurveTo(bx + lean * 0.3, C0, bx + lean, 4 + rnd() * r * 0.6); x.quadraticCurveTo(bx + lean * 0.3 + w * 0.4, C0, bx + w, TIP - 4); x.fill(); } }
+    else if (kind === 'star') { x.save(); x.translate(C0, C0); for (const [len, wd] of [[r, 4], [r * 0.45, 3]]) for (let k = 0; k < 4; k++) { x.rotate(Math.PI / 4 * (len === r ? 2 : 1)); x.beginPath(); x.moveTo(0, -len); x.lineTo(wd, 0); x.lineTo(0, len); x.lineTo(-wd, 0); x.fill(); } x.restore(); radial([[0, 1], [0.15, 0.6], [0.4, 0]], r); }
+    else if (kind === 'hatch') { x.lineCap = 'round'; x.strokeStyle = '#fff'; for (let i = 0; i < 5; i++) { const off = (i - 2) * r * 0.36 + (rnd() - 0.5) * 4; x.lineWidth = 2 + rnd() * 1.5; x.beginPath(); x.moveTo(C0 + off - r * 0.12, C0 - r * 0.85); x.lineTo(C0 + off + r * 0.12, C0 + r * 0.85); x.stroke(); } }
+    return c;
+  }
+  const tipOf = k => tips[k] || (tips[k] = makeTip(k));
+  const tintCache = new Map();
+  function tinted(k, col) { const key = k + col; let c = tintCache.get(key); if (c) return c; c = canvas(TIP, TIP); const x = ctx2(c); x.drawImage(tipOf(k), 0, 0); x.globalCompositeOperation = 'source-in'; x.fillStyle = col; x.fillRect(0, 0, TIP, TIP); if (tintCache.size > 240) tintCache.delete(tintCache.keys().next().value); tintCache.set(key, c); return c; }
+  // paper grain: a tiling noise texture that stays put on the canvas
+  const grainC = (() => { const N = 256, c = canvas(N, N), x = ctx2(c), id = x.createImageData(N, N), d = id.data, rnd = seeded(4242); const g = new Float32Array(N * N); for (const [step, amp] of [[32, 0.45], [8, 0.3], [2, 0.25]]) { const M = N / step, v = []; for (let i = 0; i < M * M; i++) v.push(rnd()); for (let y = 0; y < N; y++) for (let xx = 0; xx < N; xx++) { const gx = xx / step, gy = y / step, x0 = Math.floor(gx) % M, y0 = Math.floor(gy) % M, x1 = (x0 + 1) % M, y1 = (y0 + 1) % M, fx = gx % 1, fy = gy % 1, sx = fx * fx * (3 - 2 * fx), sy = fy * fy * (3 - 2 * fy); g[y * N + xx] += amp * lerp(lerp(v[y0 * M + x0], v[y0 * M + x1], sx), lerp(v[y1 * M + x0], v[y1 * M + x1], sx), sy); } } for (let i = 0; i < N * N; i++) { d[i * 4] = d[i * 4 + 1] = d[i * 4 + 2] = 255; d[i * 4 + 3] = clamp((g[i] - 0.25) * 2.2, 0, 1) * 255; } x.putImageData(id, 0, 0); return c; })();
+
+  const invOf = src => { const c = canvas(src.width, src.height), x = ctx2(c), id = ctx2(src).getImageData(0, 0, c.width, c.height); for (let i = 3; i < id.data.length; i += 4) id.data[i] = 255 - id.data[i]; x.putImageData(id, 0, 0); return c; };
+  function texOf(kind) {
+    if (kind === 'canvas') { const N = 128, c = canvas(N, N), x = ctx2(c), id = x.createImageData(N, N), d = id.data, rnd = seeded(77); for (let y = 0; y < N; y++) for (let xx = 0; xx < N; xx++) { const wx = Math.sin(xx / N * Math.PI * 32) * 0.5 + 0.5, wy = Math.sin(y / N * Math.PI * 32) * 0.5 + 0.5, over = ((Math.floor(xx / 4) + Math.floor(y / 4)) % 2) ? wx : wy, a = clamp(0.25 + 0.75 * over * (0.85 + rnd() * 0.15), 0, 1); const i = (y * N + xx) * 4; d[i] = d[i + 1] = d[i + 2] = 255; d[i + 3] = a * 255; } x.putImageData(id, 0, 0); return c; }
+    if (kind === 'rough') { const N = 256, c = canvas(N, N), x = ctx2(c), id = x.createImageData(N, N), d = id.data, rnd = seeded(901), g = new Float32Array(N * N); for (const [step, amp] of [[16, 0.35], [4, 0.35], [1, 0.3]]) { const M = N / step, v = []; for (let i = 0; i < M * M; i++) v.push(rnd()); for (let y = 0; y < N; y++) for (let xx = 0; xx < N; xx++) { const gx = xx / step, gy = y / step, x0 = Math.floor(gx) % M, y0 = Math.floor(gy) % M, x1 = (x0 + 1) % M, y1 = (y0 + 1) % M, fx = gx % 1, fy = gy % 1; g[y * N + xx] += amp * lerp(lerp(v[y0 * M + x0], v[y0 * M + x1], fx), lerp(v[y1 * M + x0], v[y1 * M + x1], fx), fy); } } for (let i = 0; i < N * N; i++) { d[i * 4] = d[i * 4 + 1] = d[i * 4 + 2] = 255; d[i * 4 + 3] = clamp((g[i] - 0.3) * 2.6, 0, 1) * 255; } x.putImageData(id, 0, 0); return c; }
+    return grainC;
+  }
+  const texInv = {}, grainInvOf = k => texInv[k] || (texInv[k] = invOf(texOf(k)));
+  /* ================= document ================= */
+  // doc: layers are shared across frames; each frame keeps its own picture on every layer, except Background layers (one picture for all frames)
+  let doc = null, fi = 0;           // current frame index
+  const live = new Map();           // layer id → canvas for the current frame (and background layers)
+  const dirty = new Set();          // layer ids changed since stored
+  const prevA = new Map(), prevF = new Map();   // frame id → small preview canvases (animated layers only / everything)
+  const BLENDS = [['source-over', 'Normal', 'N'], ['multiply', 'Multiply', 'M'], ['screen', 'Screen', 'S'], ['overlay', 'Overlay', 'O'], ['lighter', 'Add', 'A'], ['darken', 'Darken', 'D'], ['lighten', 'Lighten', 'L'], ['color-dodge', 'Colour dodge', 'CD'], ['color-burn', 'Colour burn', 'CB'], ['soft-light', 'Soft light', 'SL'], ['hard-light', 'Hard light', 'HL'], ['difference', 'Difference', 'Di'], ['hue', 'Hue', 'H'], ['saturation', 'Saturation', 'Sa'], ['color', 'Colour', 'C'], ['luminosity', 'Luminosity', 'Lu']];
+  const newLayer = (name, o) => Object.assign({ id: 'L' + uid(), name, visible: true, opacity: 1, blend: 'source-over', alock: false, clip: false, bg: false }, o || {});
+  function newDoc(w, hh, name, anim) {
+    return { id: 'art_' + uid(), name: name || 'Untitled artwork', w, h: hh, paper: '#ffffff', paperOn: true, fps: 12, loop: 'loop', onion: 1, animOn: !!anim,
+      layers: [newLayer('Layer 1')], frames: [{ id: 'F' + uid(), cels: {} }], statics: {}, created: Date.now(), updated: Date.now() };
+  }
+  const L = () => doc.layers[curLayer];
+  let curLayer = 0;
+  const liveOf = lid => { let c = live.get(lid); if (!c) { c = canvas(doc.w, doc.h); live.set(lid, c); } return c; };
+  async function drawBlob(c, blob) { const x = ctx2(c); x.clearRect(0, 0, c.width, c.height); if (!blob) return; try { const bm = await createImageBitmap(blob); x.drawImage(bm, 0, 0); if (bm.close) bm.close(); } catch (e) { console.warn(e); } }
+  async function stash() {   // store changed layer pictures as PNG
+    const fr = doc.frames[fi];
+    for (const lid of [...dirty]) { const Ly = doc.layers.find(l => l.id === lid); if (!Ly) { dirty.delete(lid); continue; } const b = await toBlob(liveOf(lid)); if (Ly.bg) doc.statics[lid] = b; else fr.cels[lid] = b; dirty.delete(lid); }
+  }
+  async function loadFrame() { const fr = doc.frames[fi]; for (const Ly of doc.layers) if (!Ly.bg) await drawBlob(liveOf(Ly.id), fr.cels[Ly.id]); }
+  async function goFrame(i, quiet) {
+    i = clamp(i, 0, doc.frames.length - 1); if (i === fi && !quiet) return;
+    finishTransform(); updatePreview(); await stash(); fi = i; await loadFrame(); comp.dirty = true; draw(); if (!quiet) renderFrames(); renderLayersIfOpen();
+  }
+
+  /* ================= compositing ================= */
+  const comp = { c: null, dirty: true };
+  const scratch = {};
+  const scr = (k, w, hh) => { let c = scratch[k]; if (!c || c.width !== w || c.height !== hh) { c = scratch[k] = canvas(w, hh); } return c; };
+  // draw the layers into ctx; src(layer) gives the picture; opts.only filters layers
+  function compose(x, src, opts) {
+    opts = opts || {};
+    const Ls = doc.layers;
+    for (let i = 0; i < Ls.length; i++) {
+      const Ly = Ls[i]; if (Ly.clip) continue;
+      if (!Ly.visible || (opts.only && !opts.only(Ly))) { while (Ls[i + 1] && Ls[i + 1].clip) i++; continue; }
+      const clips = []; let j = i + 1; while (Ls[j] && Ls[j].clip) { if (Ls[j].visible) clips.push(Ls[j]); j++; }
+      let pic = src(Ly); if (!pic) continue;
+      if (clips.length) { const g = scr('group', doc.w, doc.h), gx = ctx2(g); gx.globalCompositeOperation = 'copy'; gx.globalAlpha = 1; gx.drawImage(pic, 0, 0); gx.globalCompositeOperation = 'source-atop'; for (const C of clips) { const cp = src(C); if (cp) { gx.globalAlpha = C.opacity; gx.drawImage(cp, 0, 0); } } gx.globalAlpha = 1; gx.globalCompositeOperation = 'source-over'; pic = g; }
+      x.globalAlpha = Ly.opacity; x.globalCompositeOperation = Ly.blend || 'source-over';
+      if (tf && tf.lid === Ly.id && opts.live) {
+        if (tf.float) { const mx = scr('tfmix', doc.w, doc.h), mc = ctx2(mx); mc.setTransform(1, 0, 0, 1, 0, 0); mc.globalCompositeOperation = 'copy'; mc.drawImage(pic, 0, 0); mc.globalCompositeOperation = 'source-over'; mc.setTransform(tf.m); mc.drawImage(tf.float, 0, 0); mc.setTransform(1, 0, 0, 1, 0, 0); x.drawImage(mx, 0, 0); }
+        else { x.save(); x.setTransform(x.getTransform().multiply(tf.m)); x.drawImage(pic, 0, 0); x.restore(); }
+      } else x.drawImage(pic, 0, 0);
+      x.globalAlpha = 1; x.globalCompositeOperation = 'source-over';
+    }
+  }
+  // the current layer with the stroke in progress on top
+  function liveSrc(Ly) {
+    const c = liveOf(Ly.id);
+    if (stroke && stroke.lid === Ly.id && stroke.kind !== 'smudge' && stroke.kind !== 'blend') {
+      const t = scr('wip', doc.w, doc.h), x = ctx2(t); x.globalCompositeOperation = 'copy'; x.globalAlpha = 1; x.drawImage(c, 0, 0);
+      x.globalCompositeOperation = stroke.kind === 'eraser' ? 'destination-out' : Ly.alock ? 'source-atop' : 'source-over'; x.globalAlpha = stroke.op; x.drawImage(maskedStroke(), 0, 0); x.globalAlpha = 1; x.globalCompositeOperation = 'source-over';
+      return t;
+    }
+    return c;
+  }
+  function composite() {
+    if (!comp.c || comp.c.width !== doc.w || comp.c.height !== doc.h) comp.c = canvas(doc.w, doc.h);
+    const x = ctx2(comp.c); x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, doc.w, doc.h);
+    if (doc.paperOn) { x.fillStyle = doc.paper; x.fillRect(0, 0, doc.w, doc.h); }
+    compose(x, liveSrc, { live: true }); comp.dirty = false; return comp.c;
+  }
+  // a frame's picture at any size (loads other frames from storage)
+  async function renderFrame(i, opts) {
+    opts = opts || {}; const fr = doc.frames[i], c = canvas(doc.w, doc.h), x = ctx2(c);
+    if (opts.bg !== false && doc.paperOn) { x.fillStyle = doc.paper; x.fillRect(0, 0, doc.w, doc.h); }
+    const pics = new Map();
+    for (const Ly of doc.layers) {
+      if (Ly.bg && opts.bg === false) continue;
+      if (Ly.bg || i === fi) pics.set(Ly.id, liveOf(Ly.id));
+      else if (fr.cels[Ly.id]) { try { pics.set(Ly.id, await createImageBitmap(fr.cels[Ly.id])); } catch (e) { } }
+    }
+    compose(x, Ly => pics.get(Ly.id), { only: Ly => !(Ly.bg && opts.bg === false) });
+    if (opts.scale && opts.scale !== 1) { const s = canvas(Math.max(1, Math.round(doc.w * opts.scale)), Math.max(1, Math.round(doc.h * opts.scale))), sx = ctx2(s); sx.imageSmoothingQuality = 'high'; sx.drawImage(c, 0, 0, s.width, s.height); return s; }
+    return c;
+  }
+  const PREV = () => Math.min(1, 900 / Math.max(doc.w, doc.h));
+  function updatePreview() {
+    if (!doc || !doc.animOn) return;
+    const id = doc.frames[fi].id, k = PREV(), w = Math.round(doc.w * k), hh = Math.round(doc.h * k);
+    const a = prevA.get(id) || canvas(w, hh), f = prevF.get(id) || canvas(w, hh);
+    for (const [c, only] of [[a, Ly => !Ly.bg], [f, null]]) { if (c.width !== w) { c.width = w; c.height = hh; } const x = ctx2(c); x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, w, hh); x.scale(k, k); compose(x, Ly => liveOf(Ly.id), { only }); }
+    prevA.set(id, a); prevF.set(id, f);
+  }
+  async function buildPreviews() {
+    if (!doc.animOn) return; const k = PREV(), w = Math.round(doc.w * k), hh = Math.round(doc.h * k);
+    for (let i = 0; i < doc.frames.length; i++) {
+      const fr = doc.frames[i]; if (i === fi) { updatePreview(); continue; }
+      const pics = new Map(); for (const Ly of doc.layers) { if (Ly.bg) pics.set(Ly.id, liveOf(Ly.id)); else if (fr.cels[Ly.id]) { try { pics.set(Ly.id, await createImageBitmap(fr.cels[Ly.id])); } catch (e) { } } }
+      for (const [map, only] of [[prevA, Ly => !Ly.bg], [prevF, null]]) { const c = canvas(w, hh), x = ctx2(c); x.scale(k, k); compose(x, Ly => pics.get(Ly.id), { only }); map.set(fr.id, c); }
+    }
+  }
+
+  /* ================= view ================= */
+  const cv = $('#view'), vx = ctx2(cv);
+  let view = { x: 0, y: 0, s: 1, r: 0, flip: false }, dpr = 1;
+  function M() { return new DOMMatrix().translate(view.x, view.y).rotate(view.r * 180 / Math.PI).scale(view.flip ? -view.s : view.s, view.s).translate(-doc.w / 2, -doc.h / 2); }
+  function toDoc(cx, cy) { const p = M().inverse().transformPoint(new DOMPoint(cx, cy)); return [p.x, p.y]; }
+  function fit() { const top = 46, bot = doc.animOn ? 84 : 10, W = innerWidth, H = innerHeight - top - bot; view.s = Math.min((W - 110) / doc.w, (H - 30) / doc.h); view.r = 0; view.x = W / 2 + 20; view.y = top + H / 2; draw(); }
+  function resize() { dpr = window.devicePixelRatio || 1; cv.width = Math.round(innerWidth * dpr); cv.height = Math.round(innerHeight * dpr); draw(); }
+  let raf = 0; const draw = () => { if (!raf) raf = requestAnimationFrame(paint); };
+  let playing = false, playIdx = 0;
+  function paint() {
+    raf = 0; if (!doc) return;
+    const x = vx; x.setTransform(dpr, 0, 0, dpr, 0, 0); x.fillStyle = '#3a3a40'; x.fillRect(0, 0, innerWidth, innerHeight);
+    const m = M(); x.save(); x.setTransform(new DOMMatrix([dpr, 0, 0, dpr, 0, 0]).multiply(m));
+    x.shadowColor = 'rgba(0,0,0,.5)'; x.shadowBlur = 24; x.fillStyle = doc.paperOn ? doc.paper : '#fff'; x.fillRect(0, 0, doc.w, doc.h); x.shadowBlur = 0;
+    if (!doc.paperOn) { x.fillStyle = checkerPat(); x.fillRect(0, 0, doc.w, doc.h); }
+    x.imageSmoothingQuality = 'high';
+    if (playing) { const id = doc.frames[playIdx].id, p = prevF.get(id); if (doc.paperOn) { x.fillStyle = doc.paper; x.fillRect(0, 0, doc.w, doc.h); } if (p) x.drawImage(p, 0, 0, doc.w, doc.h); }
+    else {
+      x.drawImage(composite(), 0, 0);
+      if (doc.animOn && doc.onion > 0 && doc.frames.length > 1) {
+        for (let k = 1; k <= doc.onion; k++) for (const [d, tint] of [[-1, '#ff3b5c'], [1, '#2fd36b']]) {
+          const j = fi + d * k; if (j < 0 || j >= doc.frames.length) continue; const p = prevA.get(doc.frames[j].id); if (!p) continue;
+          const t = scr('onion' + d + k, p.width, p.height), tx2 = ctx2(t); tx2.globalCompositeOperation = 'copy'; tx2.drawImage(p, 0, 0); tx2.globalCompositeOperation = 'source-atop'; tx2.fillStyle = tint; tx2.globalAlpha = 0.55; tx2.fillRect(0, 0, t.width, t.height); tx2.globalAlpha = 1; tx2.globalCompositeOperation = 'source-over';
+          x.globalAlpha = 0.32 / k; x.drawImage(t, 0, 0, doc.w, doc.h); x.globalAlpha = 1;
+        }
+      }
+    }
+    if (selC && !playing) x.drawImage(selOverlay(), 0, 0);
+    if (selDraft) drawSelDraft(x);
+    // guides
+    if (guide !== 'off') {
+      x.save(); x.lineWidth = 1.5 / view.s; x.strokeStyle = 'rgba(74,163,255,.85)'; x.setLineDash([10 / view.s, 7 / view.s]); x.beginPath();
+      const cx = doc.w / 2, cy = doc.h / 2;
+      if (guide === 'v' || guide === 'quad') { x.moveTo(cx, 0); x.lineTo(cx, doc.h); }
+      if (guide === 'h' || guide === 'quad') { x.moveTo(0, cy); x.lineTo(doc.w, cy); }
+      if (guide === 'radial') for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3; x.moveTo(cx, cy); x.lineTo(cx + Math.cos(a) * doc.w, cy + Math.sin(a) * doc.w); }
+      if (guide === 'grid') { x.setLineDash([]); x.strokeStyle = 'rgba(74,163,255,.35)'; const g = gridSize; for (let gx = g; gx < doc.w; gx += g) { x.moveTo(gx, 0); x.lineTo(gx, doc.h); } for (let gy = g; gy < doc.h; gy += g) { x.moveTo(0, gy); x.lineTo(doc.w, gy); } }
+      x.stroke(); x.restore();
+    }
+    if (tf) { const b = tf.box; x.save(); x.setTransform(new DOMMatrix([dpr, 0, 0, dpr, 0, 0]).multiply(m).multiply(tf.m)); x.lineWidth = 1.5 / view.s; x.strokeStyle = '#4aa3ff'; x.strokeRect(b[0], b[1], b[2] - b[0], b[3] - b[1]); x.fillStyle = '#fff'; for (const [px, py] of [[b[0], b[1]], [b[2], b[1]], [b[0], b[3]], [b[2], b[3]]]) { x.beginPath(); x.arc(px, py, 7 / view.s, 0, 7); x.fill(); x.stroke(); } x.restore(); }
+    x.restore();
+    if (cursor && !stroke) { const p = m.transformPoint(new DOMPoint(cursor[0], cursor[1])), r = Math.max(2, curSize() * view.s / 2); x.strokeStyle = 'rgba(255,255,255,.75)'; x.lineWidth = 1; x.beginPath(); x.arc(p.x, p.y, r, 0, 7); x.stroke(); x.strokeStyle = 'rgba(0,0,0,.5)'; x.beginPath(); x.arc(p.x, p.y, r + 1, 0, 7); x.stroke(); }
+  }
+  let _cp = null; const checkerPat = () => _cp || (_cp = (() => { const c = canvas(32, 32), x = ctx2(c); x.fillStyle = '#fff'; x.fillRect(0, 0, 32, 32); x.fillStyle = '#d6d6d6'; x.fillRect(0, 0, 16, 16); x.fillRect(16, 16, 16, 16); return vx.createPattern(c, 'repeat'); })());
+
+  /* ================= tools & state ================= */
+  let tool = 'brush', brushFor = { brush: 'studio', smudge: 'soft', eraser: 'soft', blend: 'blendsoft' }, colour = '#1a1a1a', history = ['#1a1a1a', '#e8473c', '#f0ac5f', '#ffd75e', '#58c472', '#4aa3ff', '#7b61ff', '#ffffff'];
+  let guide = 'off', gridSize = 100, quickShape = true, fingerDraw = true, penSeen = false, cursor = null;
+  const curBrush = () => BY[brushFor[tool] || brushFor.brush] || BY.studio;
+  const curSize = () => bset[curBrush().id].size;
+  const strokeC0 = { c: null }; let strokeC = null, sx = null;
+  let stroke = null;
+  function setTool(t) { if (t !== 'transform') finishTransform(); tool = t; $('#selBtn').classList.toggle('on', t === 'select'); $('#selPanel').hidden = t !== 'select'; if (t === 'select') renderSelPanel(); else selDraft = null; syncSelChip(); for (const [k, id] of [['brush', '#brushBtn'], ['smudge', '#smudgeBtn'], ['blend', '#blendBtn'], ['eraser', '#eraserBtn']]) $(id).classList.toggle('on', tool === k); $('#tfBtn').classList.toggle('on', tool === 'transform'); syncSliders(); }
+
+  /* ---------- painting ---------- */
+  function ensureStrokeC() { if (!strokeC || strokeC.width !== doc.w || strokeC.height !== doc.h) { strokeC = canvas(doc.w, doc.h); sx = ctx2(strokeC); } }
+  const dabC = canvas(8, 8), dabX = ctx2(dabC);
+  let grainPat = null;
+  function symPts(x, y, a) {
+    const cx = doc.w / 2, cy = doc.h / 2, out = [[x, y, a]];
+    if (guide === 'v' || guide === 'quad') out.push([2 * cx - x, y, Math.PI - a]);
+    if (guide === 'h' || guide === 'quad') out.push([x, 2 * cy - y, -a]);
+    if (guide === 'quad') out.push([2 * cx - x, 2 * cy - y, a + Math.PI]);
+    if (guide === 'radial') { const dx = x - cx, dy = y - cy; for (let k = 1; k < 6; k++) { const t = k * Math.PI / 3, c = Math.cos(t), s = Math.sin(t); out.push([cx + dx * c - dy * s, cy + dx * s + dy * c, a + t]); } }
+    return out;
+  }
+  // colour helpers for variation and paint mixing
+  const hexRgb = c => [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3, 5), 16), parseInt(c.slice(5, 7), 16)];
+  const rgbHex = a => '#' + a.map(v => clamp(Math.round(v), 0, 255).toString(16).padStart(2, '0')).join('');
+  function jitter(col, hue, lum) {
+    let [r, g, b] = hexRgb(col).map(v => v / 255); const mx = Math.max(r, g, b), mn = Math.min(r, g, b); let hh = 0, l = (mx + mn) / 2, sat = 0;
+    if (mx !== mn) { const d = mx - mn; sat = l > 0.5 ? d / (2 - mx - mn) : d / (mx + mn); hh = mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; hh /= 6; }
+    hh = (hh + (Math.random() - 0.5) * 2 * (hue || 0) + 1) % 1; l = clamp(l + (Math.random() - 0.5) * 2 * (lum || 0), 0, 1);
+    const q = l < 0.5 ? l * (1 + sat) : l + sat - l * sat, p = 2 * l - q, f = t => { t = (t + 1) % 1; return t < 1 / 6 ? p + (q - p) * 6 * t : t < 0.5 ? q : t < 2 / 3 ? p + (q - p) * (2 / 3 - t) * 6 : p; };
+    return rgbHex([f(hh + 1 / 3), f(hh), f(hh - 1 / 3)].map(v => v * 255));
+  }
+  const pick1 = canvas(1, 1), pickX = ctx2(pick1, true);
+  // the average colour (and how covered it is) under a dab on this layer
+  function underColour(lid, x, y, size) { const c = liveOf(lid), n = Math.max(2, Math.round(size * 0.7)); pickX.clearRect(0, 0, 1, 1); pickX.drawImage(c, Math.round(x - n / 2), Math.round(y - n / 2), n, n, 0, 0, 1, 1); const d = pickX.getImageData(0, 0, 1, 1).data; return d[3] > 8 ? { rgb: [d[0], d[1], d[2]], a: d[3] / 255 } : null; }
+  function dab(x, y, size, alpha, angle) {
+    const b = stroke.brush; let col = stroke.kind === 'eraser' ? '#000000' : b.fixCol || colour;
+    if (b.scatter) { x += (Math.random() - 0.5) * size * b.scatter * 2; y += (Math.random() - 0.5) * size * b.scatter * 2; }
+    if (b.sizeJit) size *= 1 - Math.random() * b.sizeJit;
+    if (b.angJit) angle += (Math.random() - 0.5) * 2 * b.angJit;
+    if (size < 0.4) return;
+    if (stroke.kind === 'brush' && (b.hue || b.lum)) col = jitter(col, b.hue, b.lum);
+    // wet paint: the brush picks up colour already on the layer and carries it along
+    if (stroke.kind === 'brush' && b.wet && stroke.lid) {
+      const u = underColour(stroke.lid, x, y, size), base = hexRgb(col); stroke.mix = stroke.mix || base.slice();
+      if (u) for (let k = 0; k < 3; k++) stroke.mix[k] = lerp(stroke.mix[k], u.rgb[k], b.wet * u.a * 0.5);
+      for (let k = 0; k < 3; k++) stroke.mix[k] = lerp(stroke.mix[k], base[k], 0.12);
+      col = rgbHex(stroke.mix);
+    }
+    const t = tinted(b.tip, col);
+    for (const [px, py, pa] of symPts(x, y, angle)) {
+      const r = size / 2;
+      if (b.grain) {
+        const n = Math.ceil(size * 1.5) + 4; if (dabC.width < n) { dabC.width = dabC.height = n; grainPat = null; }
+        dabX.setTransform(1, 0, 0, 1, 0, 0); dabX.globalCompositeOperation = 'source-over'; dabX.globalAlpha = 1; dabX.clearRect(0, 0, n, n);
+        dabX.translate(n / 2, n / 2); dabX.rotate(pa); dabX.drawImage(t, -r, -r, size, size); dabX.setTransform(1, 0, 0, 1, 0, 0);
+        // the paper's tooth: knock out the low spots, by the brush's grain amount (the texture stays fixed to the canvas)
+        const tk = b.tex || 'paper'; if (!grainPat || grainPat.k !== tk) { grainPat = dabX.createPattern(grainInvOf(tk), 'repeat'); grainPat.k = tk; }
+        const ox = Math.round(px - n / 2), oy = Math.round(py - n / 2);
+        grainPat.setTransform(new DOMMatrix().translate(-ox, -oy));
+        dabX.globalCompositeOperation = 'destination-out'; dabX.globalAlpha = b.grain; dabX.fillStyle = grainPat; dabX.fillRect(0, 0, n, n);
+        dabX.globalAlpha = 1; dabX.globalCompositeOperation = 'source-over';
+        sx.globalAlpha = alpha; sx.drawImage(dabC, 0, 0, n, n, ox, oy, n, n);
+      } else { sx.save(); sx.globalAlpha = alpha; sx.translate(px, py); sx.rotate(pa); sx.drawImage(t, -r, -r, size, size); sx.restore(); }
+      grow(px - r - 2, py - r - 2, px + r + 2, py + r + 2);
+    }
+  }
+  function grow(a, b, c, d) { const s = stroke; s.bb[0] = Math.min(s.bb[0], a); s.bb[1] = Math.min(s.bb[1], b); s.bb[2] = Math.max(s.bb[2], c); s.bb[3] = Math.max(s.bb[3], d); }
+  function smudgeDab(x, y, size, strength) {
+    const s = stroke, c = liveOf(s.lid), lx = ctx2(c), n = Math.max(2, Math.round(size)), ox = Math.round(x - n / 2), oy = Math.round(y - n / 2);
+    if (!s.carry || s.carry.width !== n) { s.carry = canvas(n, n); ctx2(s.carry).drawImage(c, ox, oy, n, n, 0, 0, n, n); return; }
+    const m = scr('smask', n, n), mx = ctx2(m); mx.globalCompositeOperation = 'copy'; mx.drawImage(s.carry, 0, 0); mx.globalCompositeOperation = 'destination-in'; mx.drawImage(tipOf(s.brush.tip === 'round' ? 'soft' : s.brush.tip), 0, 0, n, n); mx.globalCompositeOperation = 'source-over';
+    lx.globalAlpha = strength; lx.drawImage(m, ox, oy); lx.globalAlpha = 1;
+    const cx = ctx2(s.carry); cx.globalAlpha = 0.18; cx.drawImage(c, ox, oy, n, n, 0, 0, n, n); cx.globalAlpha = 1;
+    grow(ox, oy, ox + n, oy + n); comp.dirty = true;
+  }
+  function blendDab(x, y, size, strength) {
+    const s = stroke, c = liveOf(s.lid), lx = ctx2(c), n = Math.max(4, Math.round(size)), ox = Math.round(x - n / 2), oy = Math.round(y - n / 2);
+    // blur what's under the brush (shrink and grow again: works everywhere), then lay it back through the soft tip
+    const k = Math.max(2, Math.round(n / 7)), sm = scr('bsm', k, k), smx = ctx2(sm); smx.imageSmoothingQuality = 'high'; smx.clearRect(0, 0, k, k); smx.drawImage(c, ox, oy, n, n, 0, 0, k, k);
+    const m = scr('bmask', n, n), mx = ctx2(m); mx.globalCompositeOperation = 'copy'; mx.imageSmoothingQuality = 'high'; mx.drawImage(sm, 0, 0, k, k, 0, 0, n, n);
+    mx.globalCompositeOperation = 'destination-in'; mx.drawImage(tipOf(s.brush.tip === 'round' ? 'pencil' : s.brush.tip), 0, 0, n, n); mx.globalCompositeOperation = 'source-over';
+    if (s.brush.grain) { const tk = s.brush.tex || 'paper', pat = mx.createPattern(grainInvOf(tk), 'repeat'); pat.setTransform(new DOMMatrix().translate(-ox, -oy)); mx.globalCompositeOperation = 'destination-out'; mx.globalAlpha = s.brush.grain * 0.7; mx.fillStyle = pat; mx.fillRect(0, 0, n, n); mx.globalAlpha = 1; mx.globalCompositeOperation = 'source-over'; }
+    lx.globalAlpha = strength; lx.drawImage(m, ox, oy); lx.globalAlpha = 1;
+    grow(ox, oy, ox + n, oy + n); comp.dirty = true;
+  }
+  function sizeFor(p, tilt) { const b = stroke.brush, base = stroke.size; let s = base * lerp(1 - b.pSize, 1, p); if (b.tilt && tilt > 0.35) s *= 1 + (tilt - 0.35) * 3.2; return s; }
+  function alphaFor(p, tilt) { const b = stroke.brush; let a = b.flow * lerp(1 - b.pOp, 1, p); if (b.tilt && tilt > 0.35) a *= 1 - (tilt - 0.35) * 0.9; return clamp(a, 0.01, 1); }
+  function stepTo(x, y, p, tilt) {
+    const s = stroke, b = s.brush, L0 = s.last;
+    if (!L0) { s.last = { x, y, p, t: tilt }; s.dist = 0; place(x, y, p, tilt, 0); return; }
+    const dx = x - L0.x, dy = y - L0.y, d = Math.hypot(dx, dy); if (d < 0.01) return;
+    const dirA = Math.atan2(dy, dx);
+    let pos = s.left || 0;
+    while (true) {
+      const sz = sizeFor(lerp(L0.p, p, Math.min(1, pos / d)), tilt), step = Math.max(0.5, sz * b.spacing);
+      if (pos === 0) pos = step; if (pos > d) { s.left = pos - d; break; }
+      const t = pos / d; s.dist += step; place(L0.x + dx * t, L0.y + dy * t, lerp(L0.p, p, t), tilt, dirA); pos += step;
+    }
+    s.last = { x, y, p, t: tilt };
+  }
+  function place(x, y, p, tilt, dirA) {
+    const s = stroke, b = s.brush; let size = sizeFor(p, tilt);
+    if (b.taper && !s.pen) size *= clamp(0.25 + s.dist / (s.size * 6), 0.25, 1);
+    const ang = b.angle === 'dir' ? dirA : b.angle === 'random' ? Math.random() * 6.283 : b.angle === 'fixed' ? b.ang : 0;
+    if (s.kind === 'smudge') smudgeDab(x, y, s.size, clamp(0.25 + 0.6 * p, 0, 0.9) * s.op);
+    else if (s.kind === 'blend') blendDab(x, y, size, clamp(0.2 + 0.6 * p, 0.05, 0.85) * s.op);
+    else dab(x, y, size, alphaFor(p, tilt), ang);
+  }
+  function beginStroke(e, pt) {
+    if (!L().visible) { toast('This layer is hidden. Tap its tick box to show it.'); return; }
+    ensureStrokeC(); const b = tool === 'smudge' ? BY[brushFor.smudge] : tool === 'blend' ? BY[brushFor.blend] : tool === 'eraser' ? BY[brushFor.eraser] : BY[brushFor.brush];
+    const st = bset[b.id];
+    stroke = { kind: tool, brush: b, size: st.size, op: tool === 'smudge' ? st.op : st.op, lid: L().id, bb: [1e9, 1e9, -1e9, -1e9], pts: [], pen: e.pointerType === 'pen', sm: null, stream: st.stream, t0: performance.now(), lastMove: performance.now(), snapped: false };
+    if (tool === 'eraser') stroke.op = st.op;
+    stroke.backup = scr('backup', doc.w, doc.h); const bx = ctx2(stroke.backup); bx.globalCompositeOperation = 'copy'; bx.drawImage(liveOf(stroke.lid), 0, 0); bx.globalCompositeOperation = 'source-over';
+    sx.clearRect(0, 0, doc.w, doc.h);
+    addPt(e, pt);
+  }
+  function inputP(e) { if (e.pointerType === 'pen') return clamp(e.pressure || 0.5, 0.02, 1); return 1; }
+  function inputTilt(e) { if (e.pointerType !== 'pen') return 0; if (typeof e.altitudeAngle === 'number') return clamp(1 - e.altitudeAngle / (Math.PI / 2), 0, 1); const t = Math.hypot(e.tiltX || 0, e.tiltY || 0); return clamp(t / 90, 0, 1); }
+  function addPt(e, pt) {
+    const s = stroke; if (!s || s.snapped) return;
+    let [x, y] = pt || toDoc(e.clientX, e.clientY); const p = inputP(e), tilt = inputTilt(e);
+    s.pts.push([x, y, p]);
+    if (!s.sm) s.sm = [x, y]; else { const k = 1 - s.stream * 0.9; s.sm = [s.sm[0] + (x - s.sm[0]) * k, s.sm[1] + (y - s.sm[1]) * k]; }
+    stepTo(s.sm[0], s.sm[1], p, tilt);
+    comp.dirty = true; draw();
+  }
+  function endStroke(cancel) {
+    const s = stroke; if (!s) return; stroke = null;
+    const c = liveOf(s.lid), lx = ctx2(c);
+    if (cancel) { lx.globalCompositeOperation = 'copy'; lx.drawImage(s.backup, 0, 0); lx.globalCompositeOperation = 'source-over'; sx.clearRect(0, 0, doc.w, doc.h); comp.dirty = true; draw(); return; }
+    if (!s.snapped && s.sm && s.pts.length) { const last = s.pts[s.pts.length - 1]; stroke = s; stepTo(last[0], last[1], last[2], 0); stroke = null; }
+    if (s.kind !== 'smudge' && s.kind !== 'blend') { const Ly = doc.layers.find(l => l.id === s.lid); lx.globalAlpha = s.op; lx.globalCompositeOperation = s.kind === 'eraser' ? 'destination-out' : Ly && Ly.alock ? 'source-atop' : 'source-over'; lx.drawImage(maskedStroke(), 0, 0); lx.globalAlpha = 1; lx.globalCompositeOperation = 'source-over'; sx.clearRect(0, 0, doc.w, doc.h); }
+    if (s.kind === 'smudge' || s.kind === 'blend') clampToSel(s.lid, s.backup);
+    recordRect(s.lid, s.backup, s.bb);
+    if (s.kind === 'brush') addHistoryColour(colour);
+  }
+  // history entry from a before-canvas and the changed box
+  function recordRect(lid, beforeC, bb) {
+    const x0 = clamp(Math.floor(bb[0]), 0, doc.w), y0 = clamp(Math.floor(bb[1]), 0, doc.h), x1 = clamp(Math.ceil(bb[2]), 0, doc.w), y1 = clamp(Math.ceil(bb[3]), 0, doc.h);
+    if (x1 <= x0 || y1 <= y0) { comp.dirty = true; draw(); return; }
+    const before = ctx2(beforeC).getImageData(x0, y0, x1 - x0, y1 - y0), after = ctx2(liveOf(lid)).getImageData(x0, y0, x1 - x0, y1 - y0);
+    const Ly = doc.layers.find(l => l.id === lid), fid = Ly && Ly.bg ? null : doc.frames[fi].id;
+    push({ bytes: before.data.length * 2, async undo() { await toFrame(fid); ctx2(liveOf(lid)).putImageData(before, x0, y0); touched(lid); }, async redo() { await toFrame(fid); ctx2(liveOf(lid)).putImageData(after, x0, y0); touched(lid); } });
+    touched(lid);
+  }
+  async function toFrame(fid) { if (!fid) return; const i = doc.frames.findIndex(f => f.id === fid); if (i >= 0 && i !== fi) await goFrame(i); }
+  function touched(lid) { dirty.add(lid); comp.dirty = true; draw(); saveSoon(); clearTimeout(prevT); prevT = setTimeout(() => { updatePreview(); renderFrames(); renderLayersIfOpen(); }, 250); }
+  let prevT = 0;
+
+  /* ---------- QuickShape: hold at the end of a stroke to make it a clean line, ellipse, rectangle or polyline ---------- */
+  function quickShapeCheck() {
+    const s = stroke; if (!s || s.snapped || !quickShape || s.kind === 'smudge' || s.kind === 'blend' || s.pts.length < 6) return;
+    if (performance.now() - s.lastMove < 600) return;
+    const P = s.pts.map(p => [p[0], p[1]]); let len = 0; for (let i = 1; i < P.length; i++) len += Math.hypot(P[i][0] - P[i - 1][0], P[i][1] - P[i - 1][1]);
+    if (len < 20) return;
+    const a = P[0], z = P[P.length - 1], chord = Math.hypot(z[0] - a[0], z[1] - a[1]);
+    let shape = null, path = null;
+    if (chord / len > 0.92) { shape = 'Line'; path = [a, z]; }
+    else {
+      const n = P.length, mx = P.reduce((q, p) => q + p[0], 0) / n, my = P.reduce((q, p) => q + p[1], 0) / n;
+      let sxx = 0, syy = 0, sxy = 0; for (const [x, y] of P) { sxx += (x - mx) ** 2; syy += (y - my) ** 2; sxy += (x - mx) * (y - my); }
+      let th = 0.5 * Math.atan2(2 * sxy, sxx - syy); if (Math.abs(th) < 0.12) th = 0; if (Math.abs(Math.abs(th) - Math.PI / 2) < 0.12) th = Math.sign(th) * Math.PI / 2;
+      const c = Math.cos(th), sn = Math.sin(th), loc = P.map(([x, y]) => [(x - mx) * c + (y - my) * sn, -(x - mx) * sn + (y - my) * c]);
+      const closed = chord < len * 0.18;
+      if (closed) {
+        const minx = Math.min(...loc.map(p => p[0])), maxx = Math.max(...loc.map(p => p[0])), miny = Math.min(...loc.map(p => p[1])), maxy = Math.max(...loc.map(p => p[1]));
+        const rx = (maxx - minx) / 2, ry = (maxy - miny) / 2, ccx = (maxx + minx) / 2, ccy = (maxy + miny) / 2;
+        let eE = 0, eR = 0; for (const [x, y] of loc) { const u = (x - ccx) / rx, v = (y - ccy) / ry; eE += Math.abs(Math.hypot(u, v) - 1); eR += Math.min(Math.abs(Math.abs(u) - 1), Math.abs(Math.abs(v) - 1)); }
+        eE /= n; eR /= n;
+        const back = (u, v) => [mx + (ccx + u) * c - (ccy + v) * sn, my + (ccx + u) * sn + (ccy + v) * c];
+        if (eR < eE * 0.85) { shape = 'Rectangle'; path = [back(-rx, -ry), back(rx, -ry), back(rx, ry), back(-rx, ry), back(-rx, -ry)]; }
+        else { let ex = rx, ey = ry; if (Math.abs(rx - ry) / Math.max(rx, ry) < 0.12) { ex = ey = (rx + ry) / 2; shape = 'Circle'; } else shape = 'Ellipse'; path = []; for (let k = 0; k <= 96; k++) { const t = k / 96 * Math.PI * 2; path.push(back(Math.cos(t) * ex, Math.sin(t) * ey)); } }
+      } else {
+        const keep = rdp(P, Math.max(6, Math.hypot(Math.max(...P.map(p => p[0])) - Math.min(...P.map(p => p[0])), Math.max(...P.map(p => p[1])) - Math.min(...P.map(p => p[1]))) * 0.05));
+        if (keep.length <= 6) { shape = 'Polyline'; path = keep; }
+      }
+    }
+    if (!path) return;
+    // redraw the stroke as the clean shape, at the stroke's average pressure
+    const pAvg = s.pts.reduce((q, p) => q + p[2], 0) / s.pts.length;
+    sx.clearRect(0, 0, doc.w, doc.h); s.last = null; s.left = 0; s.dist = s.size * 6;
+    for (const [x, y] of path) stepTo(x, y, pAvg, 0);
+    s.snapped = true; comp.dirty = true; draw(); toast(shape);
+  }
+  function rdp(P, eps) { if (P.length < 3) return P; const a = P[0], b = P[P.length - 1]; let md = 0, mi = 0; for (let i = 1; i < P.length - 1; i++) { const d = segDist(P[i], a, b); if (d > md) { md = d; mi = i; } } if (md > eps) { const l = rdp(P.slice(0, mi + 1), eps), r = rdp(P.slice(mi), eps); return l.slice(0, -1).concat(r); } return [a, b]; }
+  function segDist(p, a, b) { const dx = b[0] - a[0], dy = b[1] - a[1], L2 = dx * dx + dy * dy || 1, t = clamp(((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / L2, 0, 1); return Math.hypot(p[0] - a[0] - dx * t, p[1] - a[1] - dy * t); }
+  setInterval(quickShapeCheck, 100);
+
+  /* ---------- fill (drag the colour onto the canvas) ---------- */
+  function fillAt(px, py) {
+    px = Math.floor(px); py = Math.floor(py); if (px < 0 || py < 0 || px >= doc.w || py >= doc.h) return;
+    const c = liveOf(L().id), x = ctx2(c), before = scr('backup', doc.w, doc.h), bx = ctx2(before); bx.globalCompositeOperation = 'copy'; bx.drawImage(c, 0, 0); bx.globalCompositeOperation = 'source-over';
+    const id = x.getImageData(0, 0, doc.w, doc.h), d = id.data, W = doc.w, Hh = doc.h, i0 = (py * W + px) * 4, t = [d[i0], d[i0 + 1], d[i0 + 2], d[i0 + 3]], tol = 40;
+    const near = i => Math.abs(d[i] - t[0]) + Math.abs(d[i + 1] - t[1]) + Math.abs(d[i + 2] - t[2]) + Math.abs(d[i + 3] - t[3]) * 1.5 <= tol * 3;
+    const mask = new Uint8Array(W * Hh), st = [py * W + px];
+    while (st.length) { const p = st.pop(); if (mask[p]) continue; if (!near(p * 4)) continue; mask[p] = 1; const xx = p % W; if (xx > 0) st.push(p - 1); if (xx < W - 1) st.push(p + 1); if (p >= W) st.push(p - W); if (p < W * (Hh - 1)) st.push(p + W); }
+    const grown = mask.slice(); for (let p = 0; p < W * Hh; p++) if (mask[p]) { const xx = p % W; if (xx > 0) grown[p - 1] = 1; if (xx < W - 1) grown[p + 1] = 1; if (p >= W) grown[p - W] = 1; if (p < W * (Hh - 1)) grown[p + W] = 1; }
+    const col = hexRGB(colour); let x0 = W, y0 = Hh, x1 = 0, y1 = 0;
+    for (let p = 0; p < W * Hh; p++) { if (!grown[p]) continue; const i = p * 4, ea = d[i + 3] / 255; d[i] = Math.round(d[i] * ea + col[0] * (1 - ea)); d[i + 1] = Math.round(d[i + 1] * ea + col[1] * (1 - ea)); d[i + 2] = Math.round(d[i + 2] * ea + col[2] * (1 - ea)); d[i + 3] = 255; const xx = p % W, yy = (p - xx) / W; if (xx < x0) x0 = xx; if (xx > x1) x1 = xx; if (yy < y0) y0 = yy; if (yy > y1) y1 = yy; }
+    x.putImageData(id, 0, 0); clampToSel(L().id, before); recordRect(L().id, before, [x0, y0, x1 + 1, y1 + 1]); addHistoryColour(colour); toast('Filled');
+  }
+  const hexRGB = hx => { const s = hx.replace('#', ''); return [0, 2, 4].map(i => parseInt(s.slice(i, i + 2), 16)); };
+
+  /* ---------- history ---------- */
+  const hist = []; let hpos = 0;
+  function push(e) { hist.length = hpos; hist.push(e); let bytes = hist.reduce((a, q) => a + (q.bytes || 0), 0); while (hist.length > 80 || bytes > 300e6) { bytes -= hist[0].bytes || 0; hist.shift(); } hpos = hist.length; syncUndo(); }
+  let busy = false;
+  async function undo() { if (busy) return; if (stroke) endStroke(true); finishTransform(); if (hpos <= 0) return toast('Nothing to undo'); busy = true; try { await hist[--hpos].undo(); toast('Undo'); } finally { busy = false; syncUndo(); } }
+  async function redo() { if (busy) return; if (hpos >= hist.length) return toast('Nothing to redo'); busy = true; try { await hist[hpos++].redo(); toast('Redo'); } finally { busy = false; syncUndo(); } }
+  const syncUndo = () => { $('#undoBtn').disabled = hpos <= 0; $('#redoBtn').disabled = hpos >= hist.length; };
+  // whole-document changes (layers, frames): snapshot the structure and the stored pictures
+  async function structural(fn) {
+    await stash(); const snap = () => ({ layers: doc.layers.map(l => Object.assign({}, l)), frames: doc.frames.map(f => ({ id: f.id, cels: Object.assign({}, f.cels) })), statics: Object.assign({}, doc.statics), fi, curLayer, paper: doc.paper, paperOn: doc.paperOn });
+    const before = snap(); await fn(); await stash(); const after = snap();
+    const restore = async s => { doc.layers = s.layers.map(l => Object.assign({}, l)); doc.frames = s.frames.map(f => ({ id: f.id, cels: Object.assign({}, f.cels) })); doc.statics = Object.assign({}, s.statics); doc.paper = s.paper; doc.paperOn = s.paperOn; fi = s.fi; curLayer = s.curLayer; live.clear(); dirty.clear(); for (const Ly of doc.layers) if (Ly.bg) await drawBlob(liveOf(Ly.id), doc.statics[Ly.id]); await loadFrame(); await buildPreviews(); comp.dirty = true; draw(); renderFrames(); renderLayersIfOpen(); saveSoon(); };
+    push({ bytes: 0, undo: () => restore(before), redo: () => restore(after) });
+    comp.dirty = true; draw(); renderFrames(); renderLayersIfOpen(); saveSoon();
+  }
+
+  /* ================= input: Pencil, fingers, gestures ================= */
+  const ptrs = new Map(); let gest = null, tap = null, strokePtr = null, holdT = 0, pickMode = false, spaceDown = false;
+  cv.addEventListener('contextmenu', e => e.preventDefault());
+  cv.addEventListener('pointerdown', e => {
+    if (!doc) return; e.preventDefault(); try { cv.setPointerCapture(e.pointerId); } catch (x) { }
+    if (e.pointerType === 'pen' && !penSeen) { penSeen = true; fingerDraw = false; toast('Apple Pencil draws; fingers move, zoom and tap to undo. (Change in Actions → Preferences.)', 3500); }
+    ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY, type: e.pointerType, sx: e.clientX, sy: e.clientY });
+    if (playing) setPlaying(false);
+    closePops();
+    const touches = [...ptrs.values()].filter(p => p.type === 'touch').length;
+    if (e.pointerType === 'touch') {
+      if (touches === 1) tap = { t0: performance.now(), max: 1, moved: 0 }; else if (tap) tap.max = Math.max(tap.max, touches);
+      if (touches >= 2) { clearTimeout(holdT); if (stroke && strokePtr != null) endStroke(true); strokePtr = null; if (tf) tf.drag = null; if (selDraft && !selDraft.poly) selDraft = null; pickMode = false; startGest(); return; }
+      if (!fingerDraw && tool !== 'transform' && tool !== 'select') { startGest(); holdT = setTimeout(() => { if (ptrs.size === 1 && tap && tap.moved < 10) { gest = null; pickMode = true; pickAt(e.clientX, e.clientY); } }, 450); return; }
+    }
+    if (e.button === 1 || spaceDown) { startGest(); return; }
+    if (pickMode || modHeld) { pickMode = true; pickAt(e.clientX, e.clientY); strokePtr = e.pointerId; return; }
+    if (tool === 'select') { selDown(e); strokePtr = e.pointerId; return; }
+    if (tool === 'transform') { tfDown(e); strokePtr = e.pointerId; return; }
+    strokePtr = e.pointerId; beginStroke(e);
+    if (e.pointerType === 'touch') holdT = setTimeout(() => { if (stroke && tap && tap.moved < 8 && stroke.pts.length < 4) { endStroke(true); pickMode = true; pickAt(e.clientX, e.clientY); } }, 500);
+  });
+  cv.addEventListener('pointermove', e => {
+    const p = ptrs.get(e.pointerId);
+    if (p) { if (tap && p.type === 'touch') tap.moved += Math.hypot(e.clientX - p.x, e.clientY - p.y); p.x = e.clientX; p.y = e.clientY; }
+    if (gest) { moveGest(); return; }
+    if (strokePtr !== e.pointerId) { if (e.pointerType !== 'touch') { cursor = toDoc(e.clientX, e.clientY); draw(); } return; }
+    if (pickMode) { pickAt(e.clientX, e.clientY); return; }
+    if (tool === 'select') { selMove(e); return; }
+    if (tool === 'transform') { tfMove(e); return; }
+    if (stroke) {
+      if (Math.hypot(e.clientX - (stroke.mx || e.clientX), e.clientY - (stroke.my || e.clientY)) > 2.5 || !stroke.mx) { stroke.lastMove = performance.now(); stroke.mx = e.clientX; stroke.my = e.clientY; }
+      const evs = (e.getCoalescedEvents && e.getCoalescedEvents()) || []; for (const ev of (evs.length ? evs : [e])) addPt(ev);
+    }
+  });
+  const up = e => {
+    if (!ptrs.has(e.pointerId)) return; ptrs.delete(e.pointerId); clearTimeout(holdT);
+    if (strokePtr === e.pointerId) { strokePtr = null; if (pickMode) { pickMode = false; addHistoryColour(colour); } else if (tool === 'select') selUp(e); else if (tool === 'transform') tfUp(); else endStroke(e.type === 'pointercancel'); }
+    if (gest) { if (ptrs.size === 0) { endGest(); gest = null; } else startGest(); }
+    if (ptrs.size === 0) { pickMode = false; if (tap) { const T = tap; tap = null; if (performance.now() - T.t0 < 360 && T.moved < 26) { if (T.max === 2) undo(); else if (T.max === 3) redo(); else if (T.max >= 4) document.body.classList.toggle('zen'); } } }
+  };
+  cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+  cv.addEventListener('pointerleave', e => { if (e.pointerType !== 'touch') { cursor = null; draw(); } });
+  function centroid() { const P = [...ptrs.values()], n = P.length; const c = P.reduce((a, p) => [a[0] + p.x / n, a[1] + p.y / n], [0, 0]); let d = 0, a = 0; if (n > 1) { d = Math.hypot(P[0].x - P[1].x, P[0].y - P[1].y); a = Math.atan2(P[1].y - P[0].y, P[1].x - P[0].x); } return { c, d, a, n }; }
+  function startGest() { const g = centroid(); gest = Object.assign(g, { v: Object.assign({}, view), t0: performance.now(), tfm: tf ? DOMMatrix.fromMatrix(tf.m) : null }); }
+  function moveGest() {
+    const g = centroid(); if (g.n !== gest.n) { startGest(); return; }
+    if (tool === 'transform' && tf && g.n >= 2) {
+      // pinch the layer, not the canvas
+      const k = gest.d ? g.d / gest.d : 1, da = g.a - gest.a, c0 = toDoc(gest.c[0], gest.c[1]), c1 = toDoc(g.c[0], g.c[1]);
+      tf.m = new DOMMatrix().translate(c1[0], c1[1]).rotate(da * 180 / Math.PI).scale(k).translate(-c0[0], -c0[1]).multiply(gest.tfm); comp.dirty = true; draw(); return;
+    }
+    const v = gest.v; let s = v.s, r = v.r;
+    if (g.n >= 2 && gest.d > 0) { s = clamp(v.s * g.d / gest.d, 0.05, 40); r = v.r + (g.a - gest.a); if (Math.abs(r % (Math.PI * 2)) < 0.05) r = 0; }
+    // keep the point under the fingers fixed
+    const before = new DOMMatrix().translate(v.x, v.y).rotate(v.r * 180 / Math.PI).scale(v.flip ? -v.s : v.s, v.s).translate(-doc.w / 2, -doc.h / 2).inverse().transformPoint(new DOMPoint(gest.c[0], gest.c[1]));
+    view.s = s; view.r = r; view.x = v.x; view.y = v.y;
+    const now = M().transformPoint(before); view.x += g.c[0] - now.x; view.y += g.c[1] - now.y; draw();
+  }
+  function endGest() { if (gest && gest.n >= 2 && performance.now() - gest.t0 < 350 && view.s < gest.v.s * 0.72) fit(); }
+  cv.addEventListener('wheel', e => { e.preventDefault(); if (e.ctrlKey || e.metaKey) { const k = Math.exp(-e.deltaY * 0.01), d = toDoc(e.clientX, e.clientY); view.s = clamp(view.s * k, 0.05, 40); const p = M().transformPoint(new DOMPoint(d[0], d[1])); view.x += e.clientX - p.x; view.y += e.clientY - p.y; } else { view.x -= e.deltaX; view.y -= e.deltaY; } draw(); }, { passive: false });
+  function pickAt(cx, cy) { const [x, y] = toDoc(cx, cy); if (x < 0 || y < 0 || x >= doc.w || y >= doc.h) return; const d = ctx2(composite()).getImageData(Math.floor(x), Math.floor(y), 1, 1).data; if (d[3] < 8) return; setColour('#' + [d[0], d[1], d[2]].map(v => v.toString(16).padStart(2, '0')).join('')); }
+  let modHeld = false;
+  const mod = $('#modBtn'); mod.addEventListener('pointerdown', e => { e.preventDefault(); modHeld = true; mod.style.background = colour; toast('Touch the canvas to pick a colour'); }); for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) mod.addEventListener(ev, () => setTimeout(() => { modHeld = false; mod.style.background = ''; }, 40));
+  mod.addEventListener('click', () => { pickMode = true; modHeld = false; toast('Touch the canvas to pick a colour'); setTimeout(() => { if (!strokePtr) pickMode = pickMode; }, 0); });
+  addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+    const k = e.key.toLowerCase();
+    if ((e.metaKey || e.ctrlKey) && k === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
+    if (e.metaKey || e.ctrlKey) return;
+    if (k === ' ') spaceDown = true; else if (k === 'b') setTool('brush'); else if (k === 'e') setTool('eraser'); else if (k === 's') setTool('smudge'); else if (k === 'n') setTool('blend'); else if (k === 'v') startTransform(); else if (k === 'l') setTool('select'); else if (k === 'd' && selC) deselect();
+    else if (k === '[') { bset[curBrush().id].size = Math.max(1, curSize() / 1.15); syncSliders(); draw(); } else if (k === ']') { bset[curBrush().id].size = Math.min(curBrush().max, curSize() * 1.15); syncSliders(); draw(); }
+    else if (k === 'i') { pickMode = true; toast('Touch the canvas to pick a colour'); } else if (k === 'f') fit(); else if (k === ',') goFrame(fi - 1); else if (k === '.') goFrame(fi + 1); else if (k === 'tab') { e.preventDefault(); document.body.classList.toggle('zen'); }
+  });
+  addEventListener('keyup', e => { if (e.key === ' ') spaceDown = false; });
+
+  /* ---------- side sliders (size, opacity) ---------- */
+  function vslider(el, get, set, label) {
+    const paint = () => { const v = get(); el.querySelector('i').style.height = (v * 100) + '%'; el.querySelector('b').style.bottom = 'calc(' + (v * 100) + '% - ' + (v * 12) + 'px)'; };
+    el.addEventListener('pointerdown', e => { e.preventDefault(); el.setPointerCapture(e.pointerId); const r = el.getBoundingClientRect(), tip = $('#sliderTip'); const go = ev => { set(clamp(1 - (ev.clientY - r.top) / r.height, 0, 1)); paint(); tip.style.display = 'block'; tip.style.top = (ev.clientY - 14) + 'px'; tip.textContent = label(); }; go(e); const mv = ev => go(ev), upx = () => { tip.style.display = 'none'; el.removeEventListener('pointermove', mv); el.removeEventListener('pointerup', upx); el.removeEventListener('pointercancel', upx); }; el.addEventListener('pointermove', mv); el.addEventListener('pointerup', upx); el.addEventListener('pointercancel', upx); });
+    return paint;
+  }
+  const sizeK = () => { const b = curBrush(); return Math.pow((curSize() - 1) / (b.max - 1), 0.5); };
+  const paintSize = vslider($('#sizeSl'), sizeK, v => { const b = curBrush(); bset[b.id].size = 1 + Math.pow(v, 2) * (b.max - 1); }, () => Math.round(curSize()) + ' px');
+  const paintOp = vslider($('#opSl'), () => bset[curBrush().id].op, v => { bset[curBrush().id].op = Math.max(0.02, v); }, () => Math.round(bset[curBrush().id].op * 100) + '%');
+  function syncSliders() { paintSize(); paintOp(); }
+
+  /* ---------- popovers ---------- */
+  let pop = null;
+  function closePops() { if (pop) { pop.remove(); pop = null; } }
+  function openPop(anchor, el, width) {
+    if (pop && pop.dataset.for === anchor.id) { closePops(); return null; }
+    closePops(); pop = el; el.classList.add('pop'); el.dataset.for = anchor.id; document.body.append(el);
+    const r = anchor.getBoundingClientRect(), w = el.offsetWidth; el.style.top = (r.bottom + 8) + 'px'; el.style.left = clamp(r.right - w, 8, innerWidth - w - 8) + 'px';
+    return el;
+  }
+  addEventListener('pointerdown', e => { if (pop && !pop.contains(e.target) && !e.target.closest('#top') && e.target !== cv) closePops(); }, true);
+
+  // brushes
+  function brushPreview(b) {
+    const c = canvas(260, 42); c.style.width = '100%'; const save = stroke, saveC = strokeC, saveX = sx;
+    strokeC = canvas(260, 42); sx = ctx2(strokeC);
+    stroke = { kind: 'brush', brush: b, size: Math.min(b.size, 22), op: 1, bb: [0, 0, 0, 0], pts: [], pen: true, dist: 99 };
+    const cs = colour; colour = '#f0f0f5';
+    for (let i = 0; i <= 60; i++) { const t = i / 60; stepTo(14 + t * 232, 21 + Math.sin(t * Math.PI * 2) * 9, Math.sin(t * Math.PI) * 0.9 + 0.1, 0); }
+    colour = cs; ctx2(c).globalAlpha = b.op; ctx2(c).drawImage(strokeC, 0, 0); stroke = save; strokeC = saveC; sx = saveX; return c;
+  }
+  const previews = {};
+  let brushCat = null;
+  function openBrushes(which) {
+    const target = which || 'brush'; setTool(target);
+    const b = BY[brushFor[target]]; brushCat = brushCat || b.cat;
+    const el = h('div', { id: 'brushPop' });
+    const title = { brush: 'Brush library', smudge: 'Smudge with…', blend: 'Blend with…', eraser: 'Erase with…' }[target];
+    const cats = h('div', { class: 'bcats' }), list = h('div', { class: 'blist' });
+    const renderList = () => { cats.innerHTML = ''; list.innerHTML = ''; for (const c of CATS) cats.append(h('button', { class: c === brushCat ? 'on' : '', onclick: () => { brushCat = c; renderList(); } }, c)); for (const B of BRUSHES.filter(q => q.cat === brushCat)) { const pv = previews[B.id] || (previews[B.id] = brushPreview(B)); list.append(h('div', { class: 'bitem' + (brushFor[target] === B.id ? ' on' : ''), onclick: () => { brushFor[target] = B.id; renderList(); syncSliders(); renderSet(); } }, h('span', {}, B.name), pv)); } };
+    const setRow = h('div', { class: 'bset' });
+    const renderSet = () => { const B = BY[brushFor[target]]; setRow.innerHTML = ''; const r = h('input', { type: 'range', min: 0, max: 100, value: Math.round(bset[B.id].stream * 100), oninput: e => { bset[B.id].stream = e.target.value / 100; } }); setRow.append(h('span', {}, 'StreamLine'), r, h('span', {}, B.name)); };
+    el.append(h('h3', {}, title, h('span', { class: 'grow' }), target === 'brush' ? h('span', { class: 'small' }, 'Pressure and tilt work with Apple Pencil') : null), cats, list, setRow);
+    renderList(); renderSet(); openPop($(target === 'brush' ? '#brushBtn' : target === 'smudge' ? '#smudgeBtn' : target === 'blend' ? '#blendBtn' : '#eraserBtn'), el);
+  }
+  $('#brushBtn').addEventListener('click', () => tool === 'brush' ? openBrushes('brush') : setTool('brush'));
+  $('#smudgeBtn').addEventListener('click', () => tool === 'smudge' ? openBrushes('smudge') : setTool('smudge'));
+  $('#blendBtn').addEventListener('click', () => { if (tool === 'blend') openBrushes('blend'); else { setTool('blend'); toast('Blend: softens and mixes colours where you brush, without dragging them. Tap again to pick a blender.', 3200); } });
+  $('#eraserBtn').addEventListener('click', () => tool === 'eraser' ? openBrushes('eraser') : setTool('eraser'));
+
+  // layers
+  let layerMenuFor = null;
+  function thumb(Ly) { const c = canvas(92, 68), x = ctx2(c), k = Math.min(92 / doc.w, 68 / doc.h); x.drawImage(liveOf(Ly.id), (92 - doc.w * k) / 2, (68 - doc.h * k) / 2, doc.w * k, doc.h * k); return c; }
+  function renderLayersIfOpen() { if (pop && pop.id === 'layerPop') fillLayers(pop); }
+  function fillLayers(el) {
+    el.innerHTML = '';
+    el.append(h('h3', {}, 'Layers', h('span', { class: 'grow' }), doc.animOn ? h('span', { class: 'small' }, 'Frame ' + (fi + 1)) : null, h('button', { class: 'pbtn', title: 'New layer', onclick: () => addLayer() }, '＋')));
+    for (let i = doc.layers.length - 1; i >= 0; i--) {
+      const Ly = doc.layers[i], on = i === curLayer;
+      const row = h('div', { class: 'lrow' + (on ? ' on' : '') + (Ly.clip ? ' clip' : ''), onclick: ev => { if (ev.target.tagName === 'INPUT' || ev.target.classList.contains('bm')) return; if (on) layerMenuFor = layerMenuFor === Ly.id ? null : Ly.id; else { curLayer = i; layerMenuFor = null; } fillLayers(el); } },
+        thumb(Ly), h('div', { class: 'nm' }, Ly.name, h('small', {}, [Ly.bg ? 'Background · same on every frame' : null, Ly.alock ? 'Alpha lock' : null, Ly.clip ? 'Clipping mask' : null, Ly.opacity < 1 ? Math.round(Ly.opacity * 100) + '%' : null].filter(Boolean).join(' · '))),
+        h('button', { class: 'bm', title: 'Blend mode and opacity', onclick: () => { layerMenuFor = Ly.id; curLayer = i; fillLayers(el); } }, (BLENDS.find(b => b[0] === Ly.blend) || BLENDS[0])[2]),
+        h('input', { type: 'checkbox', checked: Ly.visible, title: 'Show', onchange: ev => { Ly.visible = ev.target.checked; comp.dirty = true; draw(); saveSoon(); updatePreview(); } }));
+      el.append(row);
+      if (layerMenuFor === Ly.id && on) el.append(layerMenu(Ly, i, el));
+    }
+    el.append(h('div', { class: 'lrow', onclick: () => { doc.paper = colour; doc.paperOn = true; comp.dirty = true; draw(); fillLayers(el); saveSoon(); } }, h('div', { class: 'bgsw', style: 'background:' + doc.paper }), h('div', { class: 'nm' }, 'Paper colour', h('small', {}, 'Tap to use the current colour')),
+      h('input', { type: 'checkbox', checked: doc.paperOn, title: 'Show the paper', onchange: ev => { doc.paperOn = ev.target.checked; comp.dirty = true; draw(); saveSoon(); } })));
+  }
+  function layerMenu(Ly, i, el) {
+    const act = (label, fn, on) => h('button', { class: on ? 'on' : '', onclick: async () => { await fn(); fillLayers(el); } }, label);
+    const blend = h('select', { onchange: e => { Ly.blend = e.target.value; comp.dirty = true; draw(); saveSoon(); } }, BLENDS.map(([v, n]) => h('option', { value: v, selected: v === Ly.blend }, n)));
+    const op = h('input', { type: 'range', min: 0, max: 100, value: Math.round(Ly.opacity * 100), style: 'flex:1', oninput: e => { Ly.opacity = e.target.value / 100; comp.dirty = true; draw(); }, onchange: () => { saveSoon(); updatePreview(); } });
+    return h('div', { class: 'lmenu' },
+      h('div', { class: 'full' }, 'Blend', blend), h('div', { class: 'full' }, 'Opacity', op),
+      act('Rename', async () => { const n = prompt('Layer name', Ly.name); if (n) await structural(() => { Ly.name = n.slice(0, 40); }); }),
+      act('Duplicate', () => duplicateLayer(i)),
+      act('Alpha lock', () => { Ly.alock = !Ly.alock; saveSoon(); }, Ly.alock),
+      act('Clipping mask', () => { if (i === 0) return toast('Clip needs a layer underneath.'); Ly.clip = !Ly.clip; comp.dirty = true; draw(); saveSoon(); }, Ly.clip),
+      act('Fill with colour', () => { const c = liveOf(Ly.id), b = scr('backup', doc.w, doc.h), bx = ctx2(b); bx.globalCompositeOperation = 'copy'; bx.drawImage(c, 0, 0); const x = ctx2(c); x.globalCompositeOperation = Ly.alock ? 'source-atop' : 'source-over'; x.fillStyle = colour; x.fillRect(0, 0, doc.w, doc.h); x.globalCompositeOperation = 'source-over'; recordRect(Ly.id, b, [0, 0, doc.w, doc.h]); }),
+      act('Clear', () => { const c = liveOf(Ly.id), b = scr('backup', doc.w, doc.h), bx = ctx2(b); bx.globalCompositeOperation = 'copy'; bx.drawImage(c, 0, 0); ctx2(c).clearRect(0, 0, doc.w, doc.h); recordRect(Ly.id, b, [0, 0, doc.w, doc.h]); }),
+      act('Move up', () => moveLayer(i, 1)), act('Move down', () => moveLayer(i, -1)),
+      act('Merge down', () => mergeDown(i)), act('Delete', () => deleteLayer(i)),
+      act(Ly.bg ? '✓ Background layer' : 'Background layer', () => toggleBg(Ly), Ly.bg),
+      h('div', { class: 'full', style: 'grid-column:1/-1' }, doc.animOn ? 'A background layer is the same on every frame, and “leave the background” can drop it when you bring the animation into a scene.' : 'Background layers can be left out when you bring the picture into a scene.'));
+  }
+  const MAXL = () => Math.max(4, Math.floor(420e6 / (doc.w * doc.h * 4)) - 6);
+  async function addLayer(name) { if (doc.layers.length >= MAXL()) return toast('That’s the most layers this canvas size allows.'); await structural(() => { const Ly = newLayer(name || 'Layer ' + (doc.layers.length + 1)); doc.layers.splice(curLayer + 1, 0, Ly); curLayer++; liveOf(Ly.id); }); }
+  async function duplicateLayer(i) { await structural(async () => { const S = doc.layers[i], Ly = newLayer(S.name + ' copy', { blend: S.blend, opacity: S.opacity, bg: S.bg, alock: S.alock, clip: S.clip }); doc.layers.splice(i + 1, 0, Ly); ctx2(liveOf(Ly.id)).drawImage(liveOf(S.id), 0, 0); if (S.bg) doc.statics[Ly.id] = doc.statics[S.id]; else for (const f of doc.frames) if (f.cels[S.id]) f.cels[Ly.id] = f.cels[S.id]; dirty.add(Ly.id); curLayer = i + 1; }); }
+  async function moveLayer(i, d) { const j = i + d; if (j < 0 || j >= doc.layers.length) return; await structural(() => { const t = doc.layers[i]; doc.layers[i] = doc.layers[j]; doc.layers[j] = t; curLayer = j; }); }
+  async function deleteLayer(i) { if (doc.layers.length < 2) return toast('Keep at least one layer.'); await structural(() => { const Ly = doc.layers.splice(i, 1)[0]; live.delete(Ly.id); dirty.delete(Ly.id); curLayer = clamp(i - 1, 0, doc.layers.length - 1); }); }
+  async function mergeDown(i) {
+    if (i === 0) return toast('Nothing underneath to merge into.'); const A = doc.layers[i], B = doc.layers[i - 1];
+    if (A.bg !== B.bg) return toast('Merge a background layer only with another background layer.');
+    await structural(async () => {
+      const frames = A.bg ? [null] : doc.frames.map((f, k) => k);
+      for (const k of frames) {
+        let a, b; if (k == null || k === fi) { a = liveOf(A.id); b = liveOf(B.id); } else { const f = doc.frames[k]; if (!f.cels[A.id]) continue; a = canvas(doc.w, doc.h); await drawBlob(a, f.cels[A.id]); b = canvas(doc.w, doc.h); await drawBlob(b, f.cels[B.id]); }
+        const x = ctx2(b); x.globalAlpha = A.opacity; x.globalCompositeOperation = A.blend; x.drawImage(a, 0, 0); x.globalAlpha = 1; x.globalCompositeOperation = 'source-over';
+        if (k != null && k !== fi) { doc.frames[k].cels[B.id] = await toBlob(b); delete doc.frames[k].cels[A.id]; }
+      }
+      doc.layers.splice(i, 1); live.delete(A.id); dirty.delete(A.id); dirty.add(B.id); curLayer = i - 1;
+    });
+  }
+  async function toggleBg(Ly) {
+    if (!Ly.bg && doc.animOn && doc.frames.length > 1 && !confirm('Make “' + Ly.name + '” a background layer? It will show this frame’s picture on every frame.')) return;
+    await structural(async () => { Ly.bg = !Ly.bg; if (Ly.bg) { for (const f of doc.frames) delete f.cels[Ly.id]; doc.statics[Ly.id] = await toBlob(liveOf(Ly.id)); } else { const b = doc.statics[Ly.id]; delete doc.statics[Ly.id]; for (const f of doc.frames) f.cels[Ly.id] = b; } dirty.delete(Ly.id); });
+  }
+  $('#layersBtn').addEventListener('click', () => { layerMenuFor = null; const el = h('div', { id: 'layerPop' }); if (openPop($('#layersBtn'), el)) fillLayers(el); });
+
+  // colour
+  let hsv = [0, 0, 0.1];
+  const rgb2hsv = ([r, g, b]) => { r /= 255; g /= 255; b /= 255; const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn; let hh = 0; if (d) { if (mx === r) hh = ((g - b) / d) % 6; else if (mx === g) hh = (b - r) / d + 2; else hh = (r - g) / d + 4; } return [(hh * 60 + 360) % 360, mx ? d / mx : 0, mx]; };
+  const hsv2hex = (hh, s, v) => { const c = v * s, x = c * (1 - Math.abs((hh / 60) % 2 - 1)), m = v - c; const [r, g, b] = hh < 60 ? [c, x, 0] : hh < 120 ? [x, c, 0] : hh < 180 ? [0, c, x] : hh < 240 ? [0, x, c] : hh < 300 ? [x, 0, c] : [c, 0, x]; return '#' + [r, g, b].map(q => Math.round((q + m) * 255).toString(16).padStart(2, '0')).join(''); };
+  window.Tabula = { use: (target, id) => { brushFor[target] = id; setTool(target); }, colour: c => setColour(c), size: (id, v) => { bset[id].size = v; syncSliders(); } };
+  function setColour(hx, keepHSV) { colour = hx; $('#colourBtn').style.background = hx; if (!keepHSV) { const v = rgb2hsv(hexRGB(hx)); if (v[1] > 0.01 && v[2] > 0.01) hsv[0] = v[0]; hsv[1] = v[1]; hsv[2] = v[2]; } if (pop && pop.id === 'colourPop') paintColourPop(pop); }
+  function addHistoryColour(hx) { history = [hx, ...history.filter(c => c !== hx)].slice(0, 10); }
+  const PALETTE = ['#000000', '#3b3b3b', '#7a7a7a', '#bdbdbd', '#ffffff', '#5b2c1e', '#a0522d', '#d2996c', '#f2d0a9', '#fff1e0', '#7a0f1c', '#c1272d', '#ef4f3f', '#ff8c69', '#ffc8b4', '#8a4b00', '#e07b00', '#f6a623', '#ffd75e', '#fff3b0', '#0f4d2a', '#2e8b3e', '#58c472', '#a8e6a1', '#e3f7d9', '#0b2e59', '#1f5fae', '#4aa3ff', '#9ed0ff', '#e2f1ff', '#2e1b5b', '#5b3fbf', '#8f7bff', '#c7b9ff', '#efe9ff', '#5b1240', '#a8327b', '#e06cad', '#f6b2d6', '#fde5f1'];
+  function paintColourPop(el) {
+    const sv = el.querySelector('#sv'), hb = el.querySelector('#hueBar'), d = window.devicePixelRatio || 1;
+    for (const c of [sv, hb]) { const r = c.getBoundingClientRect(); c.width = Math.round(r.width * d); c.height = Math.round(r.height * d); }
+    { const x = ctx2(sv), w = sv.width, hh = sv.height; x.fillStyle = hsv2hex(hsv[0], 1, 1); x.fillRect(0, 0, w, hh); let g = x.createLinearGradient(0, 0, w, 0); g.addColorStop(0, '#fff'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, w, hh); g = x.createLinearGradient(0, 0, 0, hh); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, '#000'); x.fillStyle = g; x.fillRect(0, 0, w, hh); x.lineWidth = 3 * d; x.strokeStyle = '#fff'; x.beginPath(); x.arc(hsv[1] * w, (1 - hsv[2]) * hh, 9 * d, 0, 7); x.stroke(); }
+    { const x = ctx2(hb), w = hb.width, hh = hb.height, g = x.createLinearGradient(0, 0, w, 0); for (let i = 0; i <= 6; i++) g.addColorStop(i / 6, 'hsl(' + i * 60 + ',100%,50%)'); x.fillStyle = g; x.fillRect(0, 0, w, hh); x.lineWidth = 3 * d; x.strokeStyle = '#fff'; x.strokeRect(hsv[0] / 360 * w - 3 * d, 1, 6 * d, hh - 2); }
+    el.querySelector('#hexIn').value = colour; const hist2 = el.querySelector('.chist'); hist2.innerHTML = ''; for (const c of history) hist2.append(h('i', { style: 'background:' + c, onclick: () => setColour(c) }));
+  }
+  function dragPick(el, fn) { el.addEventListener('pointerdown', e => { e.preventDefault(); el.setPointerCapture(e.pointerId); const go = ev => { const r = el.getBoundingClientRect(); fn(clamp((ev.clientX - r.left) / r.width, 0, 1), clamp((ev.clientY - r.top) / r.height, 0, 1)); }; go(e); const mv = ev => go(ev), upx = () => { el.removeEventListener('pointermove', mv); el.removeEventListener('pointerup', upx); }; el.addEventListener('pointermove', mv); el.addEventListener('pointerup', upx); }); }
+  function openColour() {
+    const el = h('div', { id: 'colourPop' }, h('h3', {}, 'Colour', h('span', { class: 'grow' }), h('input', { id: 'hexIn', style: 'width:96px;font-family:ui-monospace,monospace', onchange: e => { const v = e.target.value.trim(); if (/^#?[0-9a-f]{6}$/i.test(v)) setColour(v[0] === '#' ? v : '#' + v); } })),
+      h('canvas', { id: 'sv' }), h('canvas', { id: 'hueBar' }), h('div', { class: 'small', style: 'margin-top:10px' }, 'Recent'), h('div', { class: 'chist' }), h('div', { class: 'small', style: 'margin-top:10px' }, 'Palette · drag the colour circle onto the canvas to fill an area'),
+      h('div', { class: 'pal' }, PALETTE.map(c => h('i', { style: 'background:' + c, onclick: () => setColour(c) }))));
+    if (!openPop($('#colourBtn'), el)) return;
+    dragPick(el.querySelector('#sv'), (u, v) => { hsv[1] = u; hsv[2] = 1 - v; setColour(hsv2hex(...hsv), true); paintColourPop(el); });
+    dragPick(el.querySelector('#hueBar'), u => { hsv[0] = u * 359.9; setColour(hsv2hex(...hsv), true); paintColourPop(el); });
+    paintColourPop(el);
+  }
+  // ColorDrop: drag the colour circle onto the canvas
+  { const btn = $('#colourBtn'), dot = $('#dropDot'); let drag = null;
+    btn.addEventListener('pointerdown', e => { drag = { x: e.clientX, y: e.clientY, moving: false }; btn.setPointerCapture(e.pointerId); });
+    btn.addEventListener('pointermove', e => { if (!drag) return; if (!drag.moving && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) > 18) { drag.moving = true; closePops(); dot.style.display = 'block'; dot.style.background = colour; } if (drag.moving) { dot.style.left = e.clientX + 'px'; dot.style.top = e.clientY + 'px'; } });
+    btn.addEventListener('pointerup', e => { const d = drag; drag = null; dot.style.display = 'none'; if (!d) return; if (d.moving) { const [x, y] = toDoc(e.clientX, e.clientY); fillAt(x, y); } else openColour(); });
+    btn.addEventListener('pointercancel', () => { drag = null; dot.style.display = 'none'; }); }
+
+  /* ---------- selection: Automatic (magic wand), Freehand (or tap points for a polygon), Rectangle, Ellipse ---------- */
+  let selC = null, selDirty = true, selOv = null, selDraft = null, selMode = 'free', selCombine = 'new', selTol = 25, featherR = 12;
+  function maskedStroke() { if (!selC) return strokeC; const t = scr('smk', doc.w, doc.h), x = ctx2(t); x.globalCompositeOperation = 'copy'; x.drawImage(strokeC, 0, 0); x.globalCompositeOperation = 'destination-in'; x.drawImage(selC, 0, 0); x.globalCompositeOperation = 'source-over'; return t; }
+  // keep a change only inside the selection
+  function clampToSel(lid, beforeC) {
+    if (!selC) return; const live = liveOf(lid), t = scr('clampT', doc.w, doc.h), tx2 = ctx2(t);
+    tx2.globalCompositeOperation = 'copy'; tx2.drawImage(live, 0, 0); tx2.globalCompositeOperation = 'destination-in'; tx2.drawImage(selC, 0, 0); tx2.globalCompositeOperation = 'source-over';
+    const lx = ctx2(live); lx.globalCompositeOperation = 'copy'; lx.drawImage(beforeC, 0, 0); lx.globalCompositeOperation = 'destination-out'; lx.drawImage(selC, 0, 0); lx.globalCompositeOperation = 'source-over'; lx.drawImage(t, 0, 0);
+  }
+  const stripes = (() => { const c = canvas(24, 24), x = ctx2(c); x.fillStyle = 'rgba(20,20,28,.42)'; x.fillRect(0, 0, 24, 24); x.strokeStyle = 'rgba(255,255,255,.22)'; x.lineWidth = 4; x.beginPath(); for (let k = -24; k <= 48; k += 12) { x.moveTo(k, 0); x.lineTo(k + 24, 24); } x.stroke(); return c; })();
+  function selOverlay() {
+    if (selOv && !selDirty && selOv.width === doc.w) return selOv;
+    selOv = selOv && selOv.width === doc.w && selOv.height === doc.h ? selOv : canvas(doc.w, doc.h);
+    const x = ctx2(selOv); x.globalCompositeOperation = 'copy'; x.fillStyle = x.createPattern(stripes, 'repeat'); x.fillRect(0, 0, doc.w, doc.h);
+    x.globalCompositeOperation = 'destination-out'; x.drawImage(selC, 0, 0); x.globalCompositeOperation = 'source-over'; selDirty = false; return selOv;
+  }
+  function drawSelDraft(x) {
+    const d = selDraft; x.save(); x.lineWidth = 2 / view.s; x.setLineDash([8 / view.s, 6 / view.s]); x.strokeStyle = '#4aa3ff'; x.fillStyle = 'rgba(74,163,255,.12)'; x.beginPath();
+    if (d.mode === 'rect') x.rect(Math.min(d.a[0], d.b[0]), Math.min(d.a[1], d.b[1]), Math.abs(d.b[0] - d.a[0]), Math.abs(d.b[1] - d.a[1]));
+    else if (d.mode === 'ellipse') x.ellipse((d.a[0] + d.b[0]) / 2, (d.a[1] + d.b[1]) / 2, Math.abs(d.b[0] - d.a[0]) / 2 + 0.01, Math.abs(d.b[1] - d.a[1]) / 2 + 0.01, 0, 0, 7);
+    else { d.pts.forEach((p, i) => i ? x.lineTo(p[0], p[1]) : x.moveTo(p[0], p[1])); if (d.poly && d.hover) x.lineTo(d.hover[0], d.hover[1]); }
+    x.fill(); x.stroke();
+    if (d.poly && d.pts.length) { x.setLineDash([]); x.fillStyle = '#fff'; x.beginPath(); x.arc(d.pts[0][0], d.pts[0][1], 7 / view.s, 0, 7); x.fill(); x.stroke(); }
+    x.restore();
+  }
+  function applyMask(m) {
+    if (selCombine === 'new' || !selC) { if (selCombine === 'sub') return; selC = m; }
+    else { const x = ctx2(selC); x.globalCompositeOperation = selCombine === 'add' ? 'source-over' : 'destination-out'; x.drawImage(m, 0, 0); x.globalCompositeOperation = 'source-over'; }
+    selDirty = true; comp.dirty = true; draw(); syncSelChip(); renderSelPanel();
+  }
+  function pathMask(fn) { const m = canvas(doc.w, doc.h), x = ctx2(m); x.fillStyle = '#fff'; x.beginPath(); fn(x); x.fill(); return m; }
+  function wand(px, py) {
+    px = Math.floor(px); py = Math.floor(py); if (px < 0 || py < 0 || px >= doc.w || py >= doc.h) return;
+    const d = ctx2(composite()).getImageData(0, 0, doc.w, doc.h).data, W = doc.w, Hh = doc.h, i0 = (py * W + px) * 4, t = [d[i0], d[i0 + 1], d[i0 + 2], d[i0 + 3]], tol = selTol * 7.65;
+    const near = i => Math.abs(d[i] - t[0]) + Math.abs(d[i + 1] - t[1]) + Math.abs(d[i + 2] - t[2]) + Math.abs(d[i + 3] - t[3]) <= tol;
+    const mask = new Uint8Array(W * Hh), st = [py * W + px];
+    while (st.length) { const p = st.pop(); if (mask[p] || !near(p * 4)) continue; mask[p] = 1; const xx = p % W; if (xx > 0) st.push(p - 1); if (xx < W - 1) st.push(p + 1); if (p >= W) st.push(p - W); if (p < W * (Hh - 1)) st.push(p + W); }
+    const m = canvas(W, Hh), mx = ctx2(m), id = mx.createImageData(W, Hh); for (let p = 0; p < W * Hh; p++) if (mask[p]) { const k = p * 4; id.data[k] = id.data[k + 1] = id.data[k + 2] = id.data[k + 3] = 255; }
+    mx.putImageData(id, 0, 0); applyMask(m);
+  }
+  function selDown(e) {
+    const p = toDoc(e.clientX, e.clientY);
+    if (selMode === 'auto') { wand(p[0], p[1]); return; }
+    if (selMode === 'free' && selDraft && selDraft.poly) { selDraft.down = p; selDraft.dragged = false; return; }
+    selDraft = { mode: selMode, a: p, b: p, pts: [p], poly: false, down: p, dragged: false };
+  }
+  function selMove(e) {
+    const d = selDraft; if (!d) return; const p = toDoc(e.clientX, e.clientY);
+    if (Math.hypot(p[0] - d.down[0], p[1] - d.down[1]) * view.s > 6) d.dragged = true;
+    if (d.mode === 'free') { if (d.poly) d.hover = p; else if (d.dragged) d.pts.push(p); } else d.b = p;
+    draw();
+  }
+  function selUp(e) {
+    const d = selDraft; if (!d) return; const p = toDoc(e.clientX, e.clientY);
+    if (d.mode === 'rect' || d.mode === 'ellipse') {
+      selDraft = null; const w = Math.abs(d.b[0] - d.a[0]), hh = Math.abs(d.b[1] - d.a[1]); if (w < 3 || hh < 3) { draw(); return; }
+      applyMask(pathMask(x => d.mode === 'rect' ? x.rect(Math.min(d.a[0], d.b[0]), Math.min(d.a[1], d.b[1]), w, hh) : x.ellipse((d.a[0] + d.b[0]) / 2, (d.a[1] + d.b[1]) / 2, w / 2, hh / 2, 0, 0, 7))); return;
+    }
+    if (!d.poly && d.dragged && d.pts.length > 4) { selDraft = null; applyMask(pathMask(x => d.pts.forEach((q, i) => i ? x.lineTo(q[0], q[1]) : x.moveTo(q[0], q[1])))); return; }
+    // taps build a polygon; tap the first point to close it
+    if (!d.poly) { d.poly = true; d.pts = [p]; toast('Tap more points. Tap the first point to finish.'); draw(); return; }
+    const f = d.pts[0];
+    if (d.pts.length >= 3 && Math.hypot(p[0] - f[0], p[1] - f[1]) * view.s < 24) { selDraft = null; applyMask(pathMask(x => d.pts.forEach((q, i) => i ? x.lineTo(q[0], q[1]) : x.moveTo(q[0], q[1])))); return; }
+    d.pts.push(p); draw();
+  }
+  function deselect() { selC = null; selDraft = null; selDirty = true; comp.dirty = true; draw(); syncSelChip(); if (tool === 'select') renderSelPanel(); }
+  function syncSelChip() { $('#selChip').hidden = !selC || tool === 'select'; }
+  $('#selChip').addEventListener('click', deselect);
+  function beforeCopy(lid) { const b = scr('backup', doc.w, doc.h), bx = ctx2(b); bx.globalCompositeOperation = 'copy'; bx.drawImage(liveOf(lid), 0, 0); bx.globalCompositeOperation = 'source-over'; return b; }
+  const SELACT = {
+    all: () => { selC = pathMask(x => x.rect(0, 0, doc.w, doc.h)); selDirty = true; draw(); syncSelChip(); renderSelPanel(); },
+    invert: () => { if (!selC) return; const m = pathMask(x => x.rect(0, 0, doc.w, doc.h)), x = ctx2(m); x.globalCompositeOperation = 'destination-out'; x.drawImage(selC, 0, 0); selC = m; selDirty = true; draw(); },
+    feather: () => { if (!selC) return; const id = ctx2(selC).getImageData(0, 0, doc.w, doc.h); ctx2(selC).putImageData(blur(id, featherR), 0, 0); selDirty = true; comp.dirty = true; draw(); toast('Feathered'); },
+    clear: () => { if (!selC) return; const lid = L().id, b = beforeCopy(lid), x = ctx2(liveOf(lid)); x.globalCompositeOperation = 'destination-out'; x.drawImage(selC, 0, 0); x.globalCompositeOperation = 'source-over'; recordRect(lid, b, [0, 0, doc.w, doc.h]); },
+    fill: () => { if (!selC) return; const Ly = L(), b = beforeCopy(Ly.id), t = scr('selfill', doc.w, doc.h), tx2 = ctx2(t); tx2.globalCompositeOperation = 'copy'; tx2.drawImage(selC, 0, 0); tx2.globalCompositeOperation = 'source-in'; tx2.fillStyle = colour; tx2.fillRect(0, 0, doc.w, doc.h); tx2.globalCompositeOperation = 'source-over'; const x = ctx2(liveOf(Ly.id)); x.globalCompositeOperation = Ly.alock ? 'source-atop' : 'source-over'; x.drawImage(t, 0, 0); x.globalCompositeOperation = 'source-over'; recordRect(Ly.id, b, [0, 0, doc.w, doc.h]); addHistoryColour(colour); },
+    copy: cut => copyToLayer(cut),
+    transform: () => { if (!selC) return toast('Make a selection first.'); startTransform(); }
+  };
+  async function copyToLayer(cut) {
+    if (!selC) return; if (doc.layers.length >= MAXL()) return toast('That’s the most layers this canvas size allows.');
+    const src = L(), part = canvas(doc.w, doc.h), px = ctx2(part); px.drawImage(liveOf(src.id), 0, 0); px.globalCompositeOperation = 'destination-in'; px.drawImage(selC, 0, 0);
+    await structural(async () => {
+      if (cut) { const x = ctx2(liveOf(src.id)); x.globalCompositeOperation = 'destination-out'; x.drawImage(selC, 0, 0); x.globalCompositeOperation = 'source-over'; dirty.add(src.id); }
+      const Ly = newLayer(src.name + (cut ? ' (cut)' : ' (copy)'), { bg: src.bg }); doc.layers.splice(curLayer + 1, 0, Ly); ctx2(liveOf(Ly.id)).drawImage(part, 0, 0); dirty.add(Ly.id); curLayer++;
+    });
+    toast(cut ? 'Cut onto a new layer' : 'Copied onto a new layer');
+  }
+  function renderSelPanel() {
+    const P = $('#selPanel'); if (P.hidden) return; P.innerHTML = '';
+    const seg = (opts, cur, set) => h('div', { class: 'seg' }, opts.map(([v, l]) => h('button', { class: v === cur ? 'on' : '', onclick: () => { set(v); renderSelPanel(); } }, l)));
+    const B = (l, fn, dis) => h('button', { class: 'pbtn sm', disabled: !!dis, onclick: fn }, l);
+    P.append(h('div', { class: 'row' }, seg([['auto', 'Automatic'], ['free', 'Freehand'], ['rect', 'Rectangle'], ['ellipse', 'Ellipse']], selMode, v => { selMode = v; selDraft = null; draw(); }),
+      seg([['new', 'New'], ['add', 'Add'], ['sub', 'Subtract']], selCombine, v => { selCombine = v; })),
+      selMode === 'auto' ? h('label', { class: 'row small' }, 'Threshold', h('input', { type: 'range', min: 1, max: 100, value: selTol, style: 'flex:1', oninput: e => { selTol = +e.target.value; } }), 'Tap a colour on the canvas') :
+        h('div', { class: 'small' }, { free: 'Draw a loop around what you want, or tap points to make a polygon (tap the first point to finish).', rect: 'Drag a rectangle.', ellipse: 'Drag an ellipse.' }[selMode]),
+      h('div', { class: 'row' }, B('Select all', SELACT.all), B('Invert', SELACT.invert, !selC), B('Feather', SELACT.feather, !selC), h('input', { type: 'range', min: 2, max: 80, value: featherR, style: 'width:80px', title: 'Feather amount', oninput: e => { featherR = +e.target.value; } }),
+        B('Copy & paste', () => SELACT.copy(false), !selC), B('Cut & paste', () => SELACT.copy(true), !selC), B('Clear', SELACT.clear, !selC), B('Fill', SELACT.fill, !selC), B('Transform', SELACT.transform, !selC),
+        B('Deselect', deselect, !selC), h('button', { class: 'pbtn sm primary', onclick: () => setTool('brush') }, 'Done')),
+      selC ? h('div', { class: 'small' }, 'While a selection is on, painting, smudging, filling and adjustments stay inside it.') : null);
+  }
+  $('#selBtn').addEventListener('click', () => { if (tool === 'select') setTool('brush'); else { closePops(); setTool('select'); } });
+
+  /* ---------- transform the current layer ---------- */
+  let tf = null;
+  function contentBox(c) { const d = ctx2(c).getImageData(0, 0, c.width, c.height).data; let x0 = c.width, y0 = c.height, x1 = -1, y1 = -1; for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) if (d[(y * c.width + x) * 4 + 3] > 4) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; } return x1 < 0 ? null : [x0, y0, x1 + 1, y1 + 1]; }
+  function startTransform() {
+    if (tf) return finishTransform();
+    const Ly = L(), lc = liveOf(Ly.id);
+    let float = null, before = null;
+    if (selC) { float = canvas(doc.w, doc.h); const fx = ctx2(float); fx.drawImage(lc, 0, 0); fx.globalCompositeOperation = 'destination-in'; fx.drawImage(selC, 0, 0); fx.globalCompositeOperation = 'source-over'; }
+    const box = contentBox(float || lc); if (!box) return toast(selC ? 'Nothing on this layer inside the selection.' : 'This layer is empty.');
+    if (float) { before = canvas(doc.w, doc.h); ctx2(before).drawImage(lc, 0, 0); const lx = ctx2(lc); lx.globalCompositeOperation = 'destination-out'; lx.drawImage(selC, 0, 0); lx.globalCompositeOperation = 'source-over'; }
+    setTool('transform'); tf = { lid: Ly.id, m: new DOMMatrix(), box, float, before };
+    const P = $('#tfPanel'); P.hidden = false; P.innerHTML = '';
+    const B = (l, fn) => h('button', { class: 'pbtn', onclick: () => { fn(); comp.dirty = true; draw(); } }, l);
+    const cx = () => [(tf.box[0] + tf.box[2]) / 2, (tf.box[1] + tf.box[3]) / 2], about = (fn) => { const [x, y] = cx(), c = tf.m.transformPoint(new DOMPoint(x, y)); tf.m = new DOMMatrix().translate(c.x, c.y).multiply(fn).translate(-c.x, -c.y).multiply(tf.m); };
+    P.append(h('div', { class: 'small' }, 'Drag to move. Pinch with two fingers to scale and rotate the layer.'), h('div', { class: 'row' },
+      B('Flip ↔', () => about(new DOMMatrix().scale(-1, 1))), B('Flip ↕', () => about(new DOMMatrix().scale(1, -1))), B('Rotate 45°', () => about(new DOMMatrix().rotate(45))),
+      B('Bigger', () => about(new DOMMatrix().scale(1.1))), B('Smaller', () => about(new DOMMatrix().scale(1 / 1.1))),
+      B('Fit to canvas', () => { const b = tf.box, k = Math.min(doc.w / (b[2] - b[0]), doc.h / (b[3] - b[1])); tf.m = new DOMMatrix().translate(doc.w / 2, doc.h / 2).scale(k).translate(-(b[0] + b[2]) / 2, -(b[1] + b[3]) / 2); }),
+      B('Reset', () => { tf.m = new DOMMatrix(); }), h('button', { class: 'pbtn primary', onclick: () => finishTransform() }, 'Done')));
+    comp.dirty = true; draw();
+  }
+  function tfDown(e) { if (!tf) startTransform(); if (!tf) return; tf.drag = { p: toDoc(e.clientX, e.clientY), m: DOMMatrix.fromMatrix(tf.m) }; }
+  function tfMove(e) { if (!tf || !tf.drag) return; const p = toDoc(e.clientX, e.clientY); tf.m = new DOMMatrix().translate(p[0] - tf.drag.p[0], p[1] - tf.drag.p[1]).multiply(tf.drag.m); comp.dirty = true; draw(); }
+  function tfUp() { if (tf) tf.drag = null; }
+  function finishTransform() {
+    if (!tf) return; const T = tf; tf = null; $('#tfPanel').hidden = true; if (tool === 'transform') { tool = 'brush'; setTool('brush'); }
+    if (T.float) {
+      const x = ctx2(liveOf(T.lid)); x.save(); x.setTransform(T.m); x.imageSmoothingQuality = 'high'; x.drawImage(T.float, 0, 0); x.restore();
+      if (selC && !T.m.isIdentity) { const m2 = canvas(doc.w, doc.h), mx = ctx2(m2); mx.setTransform(T.m); mx.drawImage(selC, 0, 0); selC = m2; selDirty = true; }
+      if (T.m.isIdentity) { comp.dirty = true; draw(); return; }
+      recordRect(T.lid, T.before, [0, 0, doc.w, doc.h]); return;
+    }
+    if (T.m.isIdentity) { comp.dirty = true; draw(); return; }
+    const c = liveOf(T.lid), b = scr('backup', doc.w, doc.h), bx = ctx2(b); bx.globalCompositeOperation = 'copy'; bx.drawImage(c, 0, 0); bx.globalCompositeOperation = 'source-over';
+    const x = ctx2(c); x.clearRect(0, 0, doc.w, doc.h); x.save(); x.setTransform(T.m); x.imageSmoothingQuality = 'high'; x.drawImage(b, 0, 0); x.restore();
+    recordRect(T.lid, b, [0, 0, doc.w, doc.h]);
+  }
+  $('#tfBtn').addEventListener('click', () => startTransform());
+
+  /* ---------- adjustments ---------- */
+  function openAdjust(kind) {
+    closePops(); finishTransform();
+    const Ly = L(), c = liveOf(Ly.id), x = ctx2(c), orig = x.getImageData(0, 0, doc.w, doc.h), origC = canvas(doc.w, doc.h), P = $('#adjPanel'); ctx2(origC).putImageData(orig, 0, 0); P.hidden = false; P.innerHTML = '';
+    let vals = kind === 'hsb' ? { h: 0, s: 0, b: 0 } : { r: 0 }, rafA = 0;
+    const apply = () => { rafA = 0; const out = kind === 'hsb' ? hsbAdjust(orig, vals) : blur(orig, vals.r); x.putImageData(out, 0, 0); clampToSel(Ly.id, origC); comp.dirty = true; draw(); };
+    const slider = (label, key, min, max) => h('label', {}, h('span', {}, label), h('input', { type: 'range', min, max, value: 0, oninput: e => { vals[key] = +e.target.value; if (!rafA) rafA = requestAnimationFrame(apply); } }));
+    const done = keep => { P.hidden = true; if (!keep) { x.putImageData(orig, 0, 0); comp.dirty = true; draw(); return; } const b = scr('backup', doc.w, doc.h); ctx2(b).putImageData(orig, 0, 0); recordRect(Ly.id, b, [0, 0, doc.w, doc.h]); };
+    P.append(h('b', {}, kind === 'hsb' ? 'Hue, saturation, brightness' : 'Gaussian blur', h('span', { class: 'small' }, ' · ' + Ly.name)),
+      ...(kind === 'hsb' ? [slider('Hue', 'h', -180, 180), slider('Saturation', 's', -100, 100), slider('Brightness', 'b', -100, 100)] : [slider('Blur', 'r', 0, 60)]),
+      h('div', { class: 'row', style: 'justify-content:flex-end' }, h('button', { class: 'pbtn', onclick: () => done(false) }, 'Cancel'), h('button', { class: 'pbtn primary', onclick: () => done(true) }, 'Apply')));
+  }
+  function hsbAdjust(src, v) {
+    const out = new ImageData(new Uint8ClampedArray(src.data), src.width, src.height), d = out.data, hs = v.h, ss = 1 + v.s / 100, bs = v.b / 100;
+    for (let i = 0; i < d.length; i += 4) { if (!d[i + 3]) continue; let [hh, s, val] = rgb2hsv([d[i], d[i + 1], d[i + 2]]); hh = (hh + hs + 360) % 360; s = clamp(s * ss, 0, 1); val = clamp(val + bs * (bs > 0 ? 1 - val : val), 0, 1); const hx = hsv2hex(hh, s, val); d[i] = parseInt(hx.slice(1, 3), 16); d[i + 1] = parseInt(hx.slice(3, 5), 16); d[i + 2] = parseInt(hx.slice(5, 7), 16); }
+    return out;
+  }
+  function blur(src, r) {
+    r = Math.round(r); const w = src.width, hh = src.height; if (r < 1) return new ImageData(new Uint8ClampedArray(src.data), w, hh);
+    const a = new Float32Array(w * hh * 4); for (let i = 0; i < a.length; i += 4) { const al = src.data[i + 3] / 255; a[i] = src.data[i] * al; a[i + 1] = src.data[i + 1] * al; a[i + 2] = src.data[i + 2] * al; a[i + 3] = src.data[i + 3]; }
+    const b = new Float32Array(a.length), rr = Math.max(1, Math.round(r / 1.7));
+    const pass = (inp, out, horiz) => { const n = horiz ? w : hh, m = horiz ? hh : w; for (let j = 0; j < m; j++) { for (let ch = 0; ch < 4; ch++) { let acc = 0; const idx = k => horiz ? (j * w + k) * 4 + ch : (k * w + j) * 4 + ch; for (let k = -rr; k <= rr; k++) acc += inp[idx(clamp(k, 0, n - 1))]; for (let k = 0; k < n; k++) { out[idx(k)] = acc / (2 * rr + 1); acc += inp[idx(clamp(k + rr + 1, 0, n - 1))] - inp[idx(clamp(k - rr, 0, n - 1))]; } } } };
+    for (let it = 0; it < 3; it++) { pass(a, b, true); pass(b, a, false); }
+    const out = new ImageData(w, hh); for (let i = 0; i < a.length; i += 4) { const al = a[i + 3]; out.data[i + 3] = al; if (al > 0) { const k = 255 / al; out.data[i] = a[i] * k; out.data[i + 1] = a[i + 1] * k; out.data[i + 2] = a[i + 2] * k; } }
+    return out;
+  }
+  function menuPop(anchor, items, id) {
+    const el = h('div', { class: 'menuPop', id: id || 'menu' + anchor.id });
+    for (const it of items) { if (it === '-') el.append(h('hr')); else if (typeof it === 'string') el.append(h('div', { class: 'cap' }, it)); else el.append(h('button', { class: 'mi', onclick: async () => { if (!it.keep) closePops(); await it.fn(); if (it.keep) { closePops(); anchor.click(); } } }, h('span', {}, it.label), it.on != null ? h('em', {}, it.on ? 'On' : 'Off') : it.note ? h('em', {}, it.note) : null)); }
+    openPop(anchor, el);
+  }
+  $('#adjBtn').addEventListener('click', e => menuPop(e.currentTarget, [{ label: 'Hue, saturation, brightness', fn: () => openAdjust('hsb') }, { label: 'Gaussian blur', fn: () => openAdjust('blur') }]));
+
+  /* ---------- actions ---------- */
+  $('#actBtn').addEventListener('click', e => menuPop(e.currentTarget, [
+    'Add', { label: 'Insert a photo (new layer)', fn: insertPhoto }, { label: 'Add a layer', fn: () => addLayer() },
+    'Drawing guide', { label: 'Symmetry ↔', on: guide === 'v', keep: true, fn: () => setGuide('v') }, { label: 'Symmetry ↕', on: guide === 'h', keep: true, fn: () => setGuide('h') }, { label: 'Quadrant symmetry', on: guide === 'quad', keep: true, fn: () => setGuide('quad') }, { label: 'Radial symmetry (6)', on: guide === 'radial', keep: true, fn: () => setGuide('radial') }, { label: 'Grid', on: guide === 'grid', keep: true, fn: () => setGuide('grid') },
+    'Canvas', { label: 'Animation', on: doc.animOn, fn: toggleAnim }, { label: 'Flip the view ↔', fn: () => { view.flip = !view.flip; draw(); } }, { label: 'Fit to screen', fn: fit }, { label: 'Rename…', fn: () => { const n = prompt('Name', doc.name); if (n) { doc.name = n.slice(0, 60); $('#docTitle').textContent = doc.name; saveSoon(); } } },
+    'Preferences', { label: 'QuickShape (hold at the end of a stroke)', on: quickShape, keep: true, fn: () => { quickShape = !quickShape; } }, { label: 'Draw with a finger', on: fingerDraw, keep: true, fn: () => { fingerDraw = !fingerDraw; } },
+    'Share', { label: 'PNG (this frame)', fn: () => exportImage('png') }, { label: 'JPEG (this frame)', fn: () => exportImage('jpeg') }, ...(doc.animOn && doc.frames.length > 1 ? [{ label: 'Animated GIF', fn: exportGIF }] : []),
+    ...(EMBED ? [] : ['-', { label: 'New canvas…', fn: async () => { const r = await newDialog(); if (r) { await saveNow(); await openDoc(r); } } }])
+  ]));
+  function setGuide(g) { guide = guide === g ? 'off' : g; if (guide === 'grid') { const v = prompt('Grid spacing in pixels', gridSize); if (v) gridSize = clamp(+v || 100, 8, 2000); } draw(); }
+  function insertPhoto() {
+    const i = h('input', { type: 'file', accept: 'image/*', style: 'position:fixed;left:-9999px' });
+    i.addEventListener('change', async () => { const f = i.files[0]; i.remove(); if (!f) return; try { const bm = await createImageBitmap(f); await addLayer(f.name.replace(/\.[^.]+$/, '').slice(0, 30) || 'Photo'); const c = liveOf(L().id), k = Math.min(1, doc.w / bm.width, doc.h / bm.height), w = bm.width * k, hh = bm.height * k; const b = scr('backup', doc.w, doc.h); ctx2(b).clearRect(0, 0, doc.w, doc.h); ctx2(c).drawImage(bm, (doc.w - w) / 2, (doc.h - hh) / 2, w, hh); recordRect(L().id, b, [0, 0, doc.w, doc.h]); startTransform(); } catch (e) { toast('Couldn’t read that image.'); } });
+    document.body.append(i); i.click();
+  }
+  function download(blob, name) { const a = h('a', { href: URL.createObjectURL(blob), download: name }); document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 5000); }
+  const fname = ext => (doc.name || 'artwork').replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '-') + ext;
+  async function exportImage(type) { finishTransform(); const c = await renderFrame(fi, { bg: type === 'jpeg' ? true : undefined }); if (type === 'jpeg' && !doc.paperOn) { const x = ctx2(c); x.globalCompositeOperation = 'destination-over'; x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); } download(await new Promise(r => c.toBlob(r, 'image/' + type, 0.92)), fname(type === 'png' ? '.png' : '.jpg')); toast('Saved'); }
+  async function exportGIF() {
+    toast('Making the GIF…'); await stash(); const k = Math.min(1, 640 / Math.max(doc.w, doc.h)), frames = [];
+    for (let i = 0; i < doc.frames.length; i++) { const c = await renderFrame(i, { scale: k }); frames.push(ctx2(c).getImageData(0, 0, c.width, c.height).data); }
+    const w = Math.round(doc.w * k), hh = Math.round(doc.h * k);
+    download(new Blob([gifEncode(frames, w, hh, Math.round(100 / doc.fps))], { type: 'image/gif' }), fname('.gif')); toast('Saved a ' + frames.length + '-frame GIF');
+  }
+  function gifEncode(frames, w, hh, delay) {
+    // 6×7×6 colour cube with ordered dithering, plus transparency
+    const lv = [6, 7, 6], pal = []; for (let r = 0; r < 6; r++) for (let g = 0; g < 7; g++) for (let b = 0; b < 6; b++) pal.push([Math.round(r * 255 / 5), Math.round(g * 255 / 6), Math.round(b * 255 / 5)]);
+    const T = pal.length; pal.push([0, 0, 0]); while (pal.length < 256) pal.push([0, 0, 0]);
+    const B4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+    const out = []; const b = v => out.push(v & 255), w16 = v => { b(v); b(v >> 8); }, str = s => { for (const ch of s) b(ch.charCodeAt(0)); };
+    str('GIF89a'); w16(w); w16(hh); b(0xf7); b(0); b(0); for (const [r, g, bl] of pal) { b(r); b(g); b(bl); }
+    b(0x21); b(0xff); b(11); str('NETSCAPE2.0'); b(3); b(1); w16(0); b(0);
+    for (const d of frames) {
+      b(0x21); b(0xf9); b(4); b((2 << 2) | 1); w16(delay); b(T); b(0); b(0x2c); w16(0); w16(0); w16(w); w16(hh); b(0);
+      const idx = new Uint8Array(w * hh);
+      for (let y = 0, p = 0; y < hh; y++) for (let x = 0; x < w; x++, p++) { const i = p * 4; if (d[i + 3] < 110) { idx[p] = T; continue; } const t = (B4[(y & 3) * 4 + (x & 3)] + 0.5) / 16 - 0.5; const q = [0, 1, 2].map(k => clamp(Math.round(d[i + k] / 255 * (lv[k] - 1) + t), 0, lv[k] - 1)); idx[p] = q[0] * 42 + q[1] * 6 + q[2]; }
+      b(8); const data = lzw(idx, 8); for (let i = 0; i < data.length; i += 255) { const n = Math.min(255, data.length - i); b(n); for (let j = 0; j < n; j++) out.push(data[i + j]); } b(0);
+    }
+    b(0x3b); return new Uint8Array(out);
+  }
+  function lzw(idx, minCode) { const clear = 1 << minCode, eoi = clear + 1, out = []; let size = minCode + 1, next = eoi + 1, dict = new Map(), cur2 = 0, nb = 0; const put = (code, s) => { cur2 |= code << nb; nb += s; while (nb >= 8) { out.push(cur2 & 255); cur2 >>>= 8; nb -= 8; } }; put(clear, size); let prefix = idx[0]; for (let i = 1; i < idx.length; i++) { const k = idx[i], key = prefix * 4096 + k; if (dict.has(key)) { prefix = dict.get(key); continue; } put(prefix, size); if (next >= 4096) { put(clear, size); dict = new Map(); next = eoi + 1; size = minCode + 1; } else { if (next >= (1 << size)) size++; dict.set(key, next++); } prefix = k; } put(prefix, size); put(eoi, size); if (nb > 0) out.push(cur2 & 255); return out; }
+
+  /* ---------- animation ---------- */
+  async function toggleAnim() { doc.animOn = !doc.animOn; $('#anim').hidden = !doc.animOn; document.body.classList.toggle('anim-on', doc.animOn); $('#animBtn').classList.toggle('on', doc.animOn); if (doc.animOn) { await buildPreviews(); renderFrames(); toast('Animation on: ＋ adds a frame; you see the frames either side faintly (onion skin).', 3500); } fit(); saveSoon(); }
+  $('#animBtn').addEventListener('click', toggleAnim);
+  function renderFrames() {
+    if (!doc || !doc.animOn) return; const box = $('#frames'); box.innerHTML = '';
+    doc.frames.forEach((f, i) => { const p = prevF.get(f.id), t = canvas(Math.round(62 * doc.w / doc.h), 62); const x = ctx2(t); if (doc.paperOn) { x.fillStyle = doc.paper; x.fillRect(0, 0, t.width, t.height); } if (p) x.drawImage(p, 0, 0, t.width, t.height); box.append(h('div', { class: 'fthumb' + (i === fi ? ' on' : ''), onclick: () => goFrame(i) }, t, h('span', {}, i + 1))); });
+    const on = box.children[fi]; if (on && on.scrollIntoView) on.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }
+  $('#frAdd').addEventListener('click', async () => { await structural(async () => { updatePreview(); await stash(); const f = { id: 'F' + uid(), cels: {} }; doc.frames.splice(fi + 1, 0, f); fi++; await loadFrame(); updatePreview(); }); });
+  $('#frDup').addEventListener('click', async () => { await structural(async () => { updatePreview(); await stash(); const f = { id: 'F' + uid(), cels: Object.assign({}, doc.frames[fi].cels) }; doc.frames.splice(fi + 1, 0, f); fi++; await loadFrame(); updatePreview(); }); });
+  $('#frDel').addEventListener('click', async () => { if (doc.frames.length < 2) return toast('Keep at least one frame.'); await structural(async () => { const f = doc.frames.splice(fi, 1)[0]; prevA.delete(f.id); prevF.delete(f.id); fi = Math.min(fi, doc.frames.length - 1); await loadFrame(); }); });
+  let playT = 0;
+  function setPlaying(on) {
+    playing = on && doc.frames.length > 1; clearTimeout(playT);
+    $('#playBtn').innerHTML = playing ? '<svg viewBox="0 0 24 24"><path d="M7 5h3v14H7zM14 5h3v14h-3z" fill="currentColor"/></svg>' : '<svg viewBox="0 0 24 24"><path d="M7 5l12 7-12 7z" fill="currentColor"/></svg>';
+    if (playing) { playIdx = fi; let dir = 1; const tick = () => { if (!playing) return; draw(); let n = playIdx + dir; if (n >= doc.frames.length) { if (doc.loop === 'pingpong') { dir = -1; n = Math.max(0, doc.frames.length - 2); } else n = 0; } else if (n < 0) { dir = 1; n = Math.min(1, doc.frames.length - 1); } playIdx = n; playT = setTimeout(tick, 1000 / doc.fps); }; tick(); }
+    draw();
+  }
+  $('#playBtn').addEventListener('click', async () => { if (doc.frames.length < 2) return toast('Add a frame first (＋).'); updatePreview(); await stash(); setPlaying(!playing); });
+  $('#animSet').addEventListener('click', e => {
+    const el = h('div', { class: 'menuPop', id: 'animPop', style: 'width:280px;padding:12px;display:flex;flex-direction:column;gap:10px' },
+      h('b', {}, 'Animation'), h('label', { class: 'row' }, 'Frames per second', h('input', { type: 'number', min: 1, max: 60, value: doc.fps, style: 'width:70px', onchange: ev => { doc.fps = clamp(+ev.target.value || 12, 1, 60); saveSoon(); } })),
+      h('label', { class: 'row' }, 'Playback', h('select', { onchange: ev => { doc.loop = ev.target.value; saveSoon(); } }, [['loop', 'Loop'], ['pingpong', 'Ping-pong'], ['once', 'Once']].map(([v, n]) => h('option', { value: v, selected: doc.loop === v }, n)))),
+      h('label', { class: 'row' }, 'Onion skin frames', h('select', { onchange: ev => { doc.onion = +ev.target.value; draw(); saveSoon(); } }, [0, 1, 2, 3].map(v => h('option', { value: v, selected: doc.onion === v }, v ? v + ' each side' : 'Off')))),
+      h('div', { class: 'small' }, 'Tip: put things that don’t move on a layer set as “Background layer” (Layers → tap the layer twice). Use frames with separate line and colour layers, like cel animation.'));
+    const r = e.currentTarget.getBoundingClientRect(); closePops(); pop = el; el.classList.add('pop'); document.body.append(el); el.style.left = (innerWidth - el.offsetWidth - 10) + 'px'; el.style.top = (r.top - el.offsetHeight - 10) + 'px';
+  });
+
+  /* ---------- storage ---------- */
+  let dbp = null;
+  const db = () => dbp || (dbp = new Promise((res, rej) => { const r = indexedDB.open('biostage-artwork', 1); r.onupgradeneeded = () => r.result.createObjectStore('projects', { keyPath: 'id' }); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }));
+  const tx = async (mode, fn) => { const d = await db(); return new Promise((res, rej) => { const t = d.transaction('projects', mode), st = t.objectStore('projects'); const q = fn(st); t.oncomplete = () => res(q && q.result); t.onerror = () => rej(t.error); }); };
+  let saveT = 0, saving = null;
+  const saveSoon = () => { clearTimeout(saveT); saveT = setTimeout(saveNow, 1800); };
+  async function saveNow() {
+    if (!doc) return; clearTimeout(saveT); if (saving) await saving;
+    saving = (async () => { try { await stash(); doc.updated = Date.now(); const t = canvas(320, Math.round(320 * doc.h / doc.w)); ctx2(t).drawImage(composite(), 0, 0, t.width, t.height); const thumb = t.toDataURL('image/jpeg', 0.8); await tx('readwrite', st => st.put(Object.assign({}, doc, { thumb }))); } catch (e) { console.warn('save failed', e); } })();
+    await saving; saving = null;
+  }
+  addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveNow(); });
+
+  /* ---------- new canvas, gallery, open ---------- */
+  const PRESETS = { screen: [2048, 1536, 'Screen size'], square: [2048, 2048, 'Square'], portrait: [1748, 2480, 'A4 portrait'], wide: [1920, 1080, 'HD 16:9'], anim: [1280, 720, 'Animation 720p', true], small: [1024, 1024, 'Small square (animation)', true] };
+  function newDialog() {
+    return new Promise(res => {
+      const d = h('dialog', {}), pick = (w, hh, anim) => { d.close(); res(newDoc(w, hh, null, anim)); };
+      const cw = h('input', { type: 'number', value: 2000, min: 64, max: 4096, style: 'width:90px' }), ch = h('input', { type: 'number', value: 1500, min: 64, max: 4096, style: 'width:90px' });
+      d.append(h('div', { class: 'dlg' }, h('h2', {}, 'New canvas'), h('div', { class: 'presets' }, Object.values(PRESETS).map(([w, hh, n, a]) => h('button', { onclick: () => pick(w, hh, a) }, h('b', {}, n), h('small', {}, w + ' × ' + hh + (a ? ' · timeline on' : ''))))),
+        h('div', { class: 'row' }, 'Custom', cw, '×', ch, h('button', { class: 'pbtn primary', onclick: () => { const w = clamp(+cw.value || 2000, 64, 4096), hh = clamp(+ch.value || 1500, 64, 4096); if (w * hh > 16.7e6) return toast('That’s too big for an iPad canvas.'); pick(w, hh); } }, 'Create'), h('span', { class: 'grow' }), h('button', { class: 'pbtn', onclick: () => { d.close(); res(null); } }, 'Cancel'))));
+      d.addEventListener('close', () => setTimeout(() => d.remove(), 50)); document.body.append(d); d.showModal();
+    });
+  }
+  async function openGallery() {
+    await saveNow(); const g = $('#gallery'), list = $('#glist'); g.hidden = false; list.innerHTML = '';
+    const all = ((await tx('readonly', st => st.getAll()).catch(() => [])) || []).sort((a, b) => b.updated - a.updated);
+    if (!all.length) list.append(h('p', { class: 'small' }, 'Nothing here yet. Tap “＋ New canvas”.'));
+    for (const p of all) list.append(h('div', { class: 'gcard', onclick: async () => { g.hidden = true; await openDoc(p); } }, h('img', { src: p.thumb || '' }), h('div', {}, h('b', {}, p.name), h('br'), h('small', {}, p.w + ' × ' + p.h + (p.frames.length > 1 ? ' · ' + p.frames.length + ' frames' : ''))),
+      h('button', { class: 'del', title: 'Delete', onclick: async ev => { ev.stopPropagation(); if (confirm('Delete “' + p.name + '”?')) { await tx('readwrite', st => st.delete(p.id)); openGallery(); } } }, '✕')));
+  }
+  $('#galleryBtn').addEventListener('click', openGallery);
+  $('#gNew').addEventListener('click', async () => { const r = await newDialog(); if (!r) return; $('#gallery').hidden = true; await openDoc(r); });
+  async function openDoc(d) {
+    doc = d; fi = 0; live.clear(); dirty.clear(); prevA.clear(); prevF.clear(); hist.length = 0; hpos = 0; tf = null; stroke = null;
+    doc.statics = doc.statics || {}; for (const f of doc.frames) f.cels = f.cels || {};
+    curLayer = doc.layers.length - 1;
+    for (const Ly of doc.layers) if (Ly.bg) await drawBlob(liveOf(Ly.id), doc.statics[Ly.id]);
+    await loadFrame(); comp.dirty = true;
+    $('#docTitle').textContent = doc.name; $('#anim').hidden = !doc.animOn; document.body.classList.toggle('anim-on', !!doc.animOn); selC = null; selDraft = null; selDirty = true; $('#animBtn').classList.toggle('on', doc.animOn);
+    await buildPreviews(); renderFrames(); resize(); fit(); syncUndo(); syncSliders(); setColour(colour); setTool('brush'); saveSoon();
+  }
+
+  /* ---------- Psi Phi Studio: bring the picture or animation into the scene ---------- */
+  const toParent = (m, tr) => { try { if (window.parent !== window) window.parent.postMessage(m, '*', tr || []); } catch (e) { } };
+  let ready = false;
+  function exportChoice() {
+    return new Promise(res => {
+      const anim = doc.animOn && doc.frames.length > 1, hasBgL = doc.layers.some(l => l.bg);
+      let frames = anim ? 'all' : 'one', bg = 'keep';
+      const d = h('dialog', {}), body = h('div', { class: 'dlg' });
+      const render = () => {
+        body.innerHTML = '';
+        const opt = (cur, val, set, title, sub) => h('button', { class: cur === val ? 'on' : '', onclick: () => { set(val); render(); } }, h('b', {}, title), h('small', {}, sub));
+        body.append(h('h2', {}, 'Bring into your scene'),
+          anim ? h('div', { class: 'choice' }, opt(frames, 'all', v => frames = v, 'Animation', doc.frames.length + ' frames at ' + doc.fps + ' fps, ' + (doc.loop === 'pingpong' ? 'ping-pong' : doc.loop === 'once' ? 'plays once' : 'looping')), opt(frames, 'one', v => frames = v, 'This frame', 'A still picture')) : null,
+          h('div', { class: 'choice' }, opt(bg, 'keep', v => bg = v, 'Keep the background', doc.paperOn ? 'Paper colour' + (hasBgL ? ' and background layers' : '') + ' included' : 'As you see it'), opt(bg, 'leave', v => bg = v, 'Leave it out', 'Transparent: just the ' + (anim && frames === 'all' ? 'animated drawing' : 'drawing') + (hasBgL ? ', without background layers' : ''))),
+          h('div', { class: 'row', style: 'justify-content:flex-end' }, h('button', { class: 'pbtn', onclick: () => { d.close(); res(null); } }, 'Cancel'), h('button', { class: 'pbtn primary', onclick: () => { d.close(); res({ frames, bg }); } }, '✓ Use in scene')));
+      };
+      render(); d.append(body); d.addEventListener('cancel', () => res(null)); d.addEventListener('close', () => setTimeout(() => d.remove(), 50)); document.body.append(d); d.showModal();
+    });
+  }
+  if (EMBED) addEventListener('message', async e => {
+    if (e.source !== window.parent) return; const m = e.data || {};
+    if (m.type === 'st-ping' && ready) toParent({ type: 'st-ready', projId: doc.id });
+    if (m.type !== 'st-export') return;
+    try {
+      if (stroke) endStroke(); finishTransform(); setPlaying(false); closePops();
+      const ch = m.auto || await exportChoice(); if (!ch) { toParent({ type: 'st-cancel' }); return; }
+      toast('Preparing…', 6000); await saveNow();
+      const idxs = ch.frames === 'all' ? doc.frames.map((f, i) => i) : [fi];
+      const maxSide = idxs.length > 1 ? 1024 : 2048, k = Math.min(1, maxSide / Math.max(doc.w, doc.h));
+      const bufs = [];
+      for (const i of idxs) { const c = await renderFrame(i, { bg: ch.bg === 'leave' ? false : undefined, scale: k }); bufs.push(await (await toBlob(c)).arrayBuffer()); }
+      toParent({ type: 'st-result', kind: 'frames', bufs, name: doc.name, projId: doc.id, w: Math.round(doc.w * k), h: Math.round(doc.h * k), fps: doc.fps, loop: doc.loop, frames: bufs.length }, bufs);
+    } catch (err) { toParent({ type: 'st-error', message: (err && err.message) || String(err) }); }
+  });
+  window.Artwork = { get sel() { return selC; }, SELACT, setSel: (m, c) => { selMode = m; if (c) selCombine = c; renderSelPanel(); }, get doc() { return doc; }, get view() { return view; }, get fi() { return fi; }, toDoc, setColour, setTool, openBrushes, brushFor, bset, goFrame, undo, redo, fit, toggleAnim, saveNow, renderFrame, exportChoice, startTransform, setGuide: g => { guide = g; draw(); } };
+
+  addEventListener('resize', () => { if (doc) { resize(); } });
+  (async () => {
+    let d = null; const pid = QS.get('proj'), nw = QS.get('new');
+    if (pid) d = await tx('readonly', st => st.get(pid)).catch(() => null);
+    if (!d && nw) { const P = PRESETS[nw]; const m = String(nw).match(/^(\d+)x(\d+)$/); d = P ? newDoc(P[0], P[1], null, P[3]) : m ? newDoc(+m[1], +m[2]) : newDoc(2048, 1536); }
+    if (!d && !EMBED) { const all = ((await tx('readonly', st => st.getAll()).catch(() => [])) || []).sort((a, b) => b.updated - a.updated); d = all[0]; }
+    await openDoc(d || newDoc(2048, 1536));
+    if (!pid) toast('Draw with a finger or the Pencil · two-finger tap undo · three-finger tap redo · pinch to zoom and rotate', 4500);
+    ready = true; if (EMBED) toParent({ type: 'st-ready', projId: doc.id });
+  })();
+})();
+</script>
+</body>
+</html>
